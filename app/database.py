@@ -2,7 +2,10 @@
 数据库模块
 SQLAlchemy 2.0 声明式模型、会话管理、辅助函数。
 """
+import json
+import logging
 from datetime import datetime
+from pathlib import Path
 from typing import Generator, Optional
 
 from sqlalchemy import (
@@ -10,6 +13,8 @@ from sqlalchemy import (
     create_engine, event, text
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
+
+logger = logging.getLogger(__name__)
 
 from app.config import DATABASE_URL
 
@@ -89,8 +94,46 @@ def init_db():
         db.close()
 
 
+# ============================================================
+# 播种初始数据
+# ============================================================
+def seed_words():
+    """首次启动时，如果 words 表为空且种子文件存在，则批量导入初始单词。"""
+    seed_file = Path(__file__).parent.parent / "seed" / "initial_words.json"
+    if not seed_file.exists():
+        return
+
+    db = SessionLocal()
+    try:
+        count = db.query(Word).count()
+        if count > 0:
+            return
+
+        with open(seed_file, "r", encoding="utf-8") as f:
+            words_data = json.load(f)
+
+        seen: set = set()
+        for item in words_data:
+            spanish = (item.get("spanish") or "").strip()
+            if not spanish or spanish in seen:
+                continue
+            seen.add(spanish)
+            db.add(Word(
+                spanish=spanish,
+                english=(item.get("english") or "").strip() or None,
+                chinese=(item.get("chinese") or "").strip() or None,
+            ))
+
+        db.commit()
+        logger.info(f"Seeded {len(seen)} words from seed/initial_words.json")
+        print(f"Seeded {len(seen)} words from seed/initial_words.json")
+    finally:
+        db.close()
+
+
 # 应用启动时自动初始化
 init_db()
+seed_words()
 
 
 # ============================================================
