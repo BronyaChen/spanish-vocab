@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>西班牙语背单词</title>
+<!-- PWA 支持 -->
+<link rel="manifest" href="/static/manifest.json">
+<meta name="theme-color" content="#4a90d9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+<style>
+/* ===== 全局重置与变量 ===== */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#4a90d9;
+  --primary-light:#e8f2fc;
+  --accent:#f5a623;
+  --danger:#e74c3c;
+  --success:#27ae60;
+  --bg:#f4f6f9;
+  --card:#fff;
+  --text:#2c3e50;
+  --text-light:#7f8c8d;
+  --border:#e0e4e8;
+  --radius:14px;
+  --shadow:0 2px 12px rgba(0,0,0,.06);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+html,body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;border:none;outline:none}
+input,select{font-family:inherit;outline:none}
+
+/* ===== 布局 ===== */
+.app{max-width:480px;margin:0 auto;padding:16px 16px 80px;min-height:100vh;position:relative}
+@media(min-width:768px){.app{max-width:560px;padding:24px 24px 90px}}
+
+/* ===== 顶栏 ===== */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.header h1{font-size:20px;font-weight:700;color:var(--primary)}
+.header .gear{width:36px;height:36px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-size:18px;transition:transform .2s}
+.header .gear:active{transform:rotate(90deg)}
+
+/* ===== Tab 底栏 ===== */
+.tab-bar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:100;padding:6px 0 env(safe-area-inset-bottom,6px)}
+.tab-bar button{flex:1;padding:10px 0 6px;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--text-light);transition:color .2s}
+.tab-bar button.active{color:var(--primary);font-weight:600}
+.tab-bar button .icon{font-size:20px}
+
+/* ===== Section 通用 ===== */
+section{display:none}
+section.active{display:block}
+
+/* ===== 模式切换条 ===== */
+.mode-bar,.sub-tabs,.view-toggles{display:flex;gap:8px;margin-bottom:14px}
+.mode-bar button,.sub-tabs button,.view-toggles button{flex:1;padding:10px 6px;border-radius:10px;background:var(--card);border:2px solid var(--border);font-size:13px;font-weight:600;transition:all .2s}
+.mode-bar button.active,.sub-tabs button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.view-toggles button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.view-toggles button.inactive{background:var(--card);color:#999;border-color:var(--border);text-decoration:line-through}
+
+/* ===== 卡片 ===== */
+.quiz-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:32px 24px;text-align:center;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:16px;transition:transform .15s}
+.quiz-card .question{font-size:26px;font-weight:700;margin-bottom:8px;word-break:break-word}
+.quiz-card .hint{font-size:14px;color:var(--text-light)}
+.quiz-card .answer{font-size:22px;font-weight:600;color:var(--primary);margin-top:16px;opacity:0;transition:opacity .3s}
+.quiz-card .answer.show{opacity:1}
+.reveal-btn{width:100%;padding:14px;border-radius:10px;background:var(--primary-light);color:var(--primary);font-size:15px;font-weight:600;margin-bottom:12px;transition:background .2s}
+.reveal-btn:active{background:#d0e4f7}
+
+/* 操作按钮行 */
+.action-row{display:flex;gap:10px;margin-bottom:16px}
+.action-row button{flex:1;padding:14px 8px;border-radius:10px;font-size:14px;font-weight:700;color:#fff;transition:transform .1s}
+.action-row button:active{transform:scale(.95)}
+.btn-remember{background:var(--success)}
+.btn-favorite{background:var(--accent)}
+.btn-kill{background:var(--danger)}
+
+.start-btn,.batch-btn{width:100%;padding:16px;border-radius:12px;background:var(--primary);color:#fff;font-size:16px;font-weight:700;transition:transform .1s}
+.start-btn:active,.batch-btn:active{transform:scale(.97)}
+
+.done-msg{text-align:center;padding:40px 20px;color:var(--text-light);font-size:15px}
+.done-msg button{margin-top:16px}
+
+/* ===== 单词列表 ===== */
+.word-list{display:flex;flex-direction:column;gap:8px}
+.word-item{background:var(--card);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px}
+.word-item .col-zh{flex:1;font-size:14px;min-width:0}
+.word-item .col-en{flex:1;font-size:13px;color:var(--text-light);min-width:0}
+.word-item .col-es{flex:1;font-size:14px;font-weight:600;color:var(--primary);min-width:0}
+/* 遮罩 */
+.word-item .masked{background:var(--border);border-radius:4px;color:transparent;user-select:none;cursor:pointer;transition:background .2s,color .2s;padding:2px 4px}
+.word-item .masked.revealed{background:transparent;color:inherit}
+.word-item .restore-btn{padding:6px 10px;border-radius:8px;background:var(--primary-light);color:var(--primary);font-size:12px;font-weight:600;white-space:nowrap}
+
+/* 分页 */
+.pagination{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:14px;font-size:13px;color:var(--text-light)}
+.pagination button{padding:8px 14px;border-radius:8px;background:var(--card);border:1px solid var(--border);font-size:13px}
+.pagination button:disabled{opacity:.4;cursor:not-allowed}
+
+/* ===== 上传 ===== */
+.upload-area{background:var(--card);border:2px dashed var(--border);border-radius:var(--radius);padding:40px 20px;text-align:center;margin-bottom:16px;cursor:pointer;transition:border-color .2s}
+.upload-area:active{border-color:var(--primary)}
+.upload-area .icon{font-size:36px;margin-bottom:8px}
+.upload-area p{font-size:14px;color:var(--text-light)}
+.upload-area input{display:none}
+.spinner{display:none;text-align:center;padding:20px;font-size:14px;color:var(--text-light)}
+.spinner.show{display:block}
+
+/* 手动录入区 */
+.manual-entry{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:16px;box-shadow:var(--shadow)}
+.manual-entry h3{font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text)}
+.manual-entry .inputs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.manual-entry .inputs input{flex:1;min-width:80px;padding:10px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px}
+.manual-entry .add-btn{width:100%;padding:10px;border-radius:8px;background:var(--success);color:#fff;font-size:13px;font-weight:600;transition:transform .1s}
+.manual-entry .add-btn:active{transform:scale(.97)}
+
+/* Excel 上传按钮 */
+.upload-row{display:flex;gap:10px;margin-bottom:16px}
+.upload-row .upload-box{flex:1;background:var(--card);border:2px dashed var(--border);border-radius:var(--radius);padding:24px 12px;text-align:center;cursor:pointer;transition:border-color .2s}
+.upload-row .upload-box:active{border-color:var(--primary)}
+.upload-row .upload-box .icon{font-size:28px;margin-bottom:4px}
+.upload-row .upload-box p{font-size:12px;color:var(--text-light)}
+
+/* 可编辑表格 */
+.edit-table{width:100%;border-collapse:separate;border-spacing:0 6px;margin-bottom:14px}
+.edit-table th{font-size:12px;color:var(--text-light);text-align:left;padding:0 6px 4px}
+.edit-table td{padding:0 4px}
+.edit-table input{width:100%;padding:10px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px}
+.edit-table .del-btn{width:32px;height:32px;border-radius:8px;background:var(--danger);color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center}
+
+/* ===== 设置弹层 ===== */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:flex-end;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--card);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:24px 20px 32px;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal h2{font-size:18px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.modal h2 .close{font-size:22px;color:var(--text-light);background:none;padding:4px}
+.modal label{display:block;font-size:13px;font-weight:600;color:var(--text-light);margin:12px 0 4px}
+.modal select,.modal input[type=password],.modal input[type=number]{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;font-size:14px;background:var(--bg)}
+.modal .save-btn{width:100%;padding:14px;border-radius:12px;background:var(--primary);color:#fff;font-size:15px;font-weight:700;margin-top:18px}
+.modal .backup-row{display:flex;gap:10px;margin-top:14px}
+.modal .backup-row button{flex:1;padding:12px;border-radius:10px;font-size:13px;font-weight:600;background:var(--bg);border:1px solid var(--border)}
+
+/* ===== Toast ===== */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 顶栏 -->
+  <div class="header">
+    <h1>📖 西语单词</h1>
+    <button class="gear" onclick="openSettings()">⚙️</button>
+  </div>
+
+  <!-- ===== 页面1：抽查 ===== -->
+  <section id="sec-quiz" class="active">
+    <div class="mode-bar">
+      <button class="active" onclick="setQuizMode('cn2es')">中/英 → 西</button>
+      <button onclick="setQuizMode('es2cn')">西 → 中/英</button>
+    </div>
+    <div id="quiz-body">
+      <button class="start-btn" onclick="startQuiz()">开始抽查</button>
+    </div>
+  </section>
+
+  <!-- ===== 页面2：列表 ===== -->
+  <section id="sec-list">
+    <div class="sub-tabs">
+      <button class="active" onclick="setListView('all')">全部</button>
+      <button onclick="setListView('favorites')">收藏夹</button>
+      <button onclick="setListView('killed')">已斩</button>
+    </div>
+    <div class="view-toggles">
+      <button class="active" id="toggle-zh" onclick="toggleLang('zh')">中文</button>
+      <button class="active" id="toggle-en" onclick="toggleLang('en')">英文</button>
+      <button class="active" id="toggle-es" onclick="toggleLang('es')">西语</button>
+    </div>
+    <div id="list-body" class="word-list"></div>
+    <div id="list-pagination" class="pagination"></div>
+  </section>
+
+  <!-- ===== 页面3：上传 ===== -->
+  <section id="sec-upload">
+    <!-- 手动录入区域 -->
+    <div class="manual-entry">
+      <h3>✏️ 手动录入</h3>
+      <div class="inputs">
+        <input type="text" id="manual-es" placeholder="西班牙语（必填）">
+        <input type="text" id="manual-en" placeholder="英文（选填）">
+        <input type="text" id="manual-zh" placeholder="中文（选填）">
+      </div>
+      <button class="add-btn" onclick="addManualWord()">＋ 添加到待确认列表</button>
+    </div>
+    <!-- 图片/Excel 上传区 -->
+    <div class="upload-row">
+      <div class="upload-box" onclick="document.getElementById('file-input').click()">
+        <div class="icon">📷</div>
+        <p>选择图片 / 拍照</p>
+        <input type="file" id="file-input" accept="image/*" onchange="handleUpload(event)" style="display:none">
+      </div>
+      <div class="upload-box" onclick="document.getElementById('excel-input').click()">
+        <div class="icon">📊</div>
+        <p>上传 Excel/CSV</p>
+        <input type="file" id="excel-input" accept=".xlsx,.xls,.csv" onchange="handleExcelUpload(event)" style="display:none">
+      </div>
+    </div>
+    <div id="upload-spinner" class="spinner">⏳ 正在识别中，请稍候...</div>
+    <div id="upload-result"></div>
+  </section>
+</div>
+
+<!-- 底部 Tab 栏 -->
+<div class="tab-bar">
+  <button class="active" onclick="switchTab('quiz')"><span class="icon">🎯</span>抽查</button>
+  <button onclick="switchTab('list')"><span class="icon">📋</span>列表</button>
+  <button onclick="switchTab('upload')"><span class="icon">📤</span>上传</button>
+</div>
+
+<!-- 设置弹层 -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <h2>设置 <button class="close" onclick="closeSettings()">✕</button></h2>
+    <label>AI 识别服务</label>
+    <select id="set-provider">
+      <option value="qwen">Qwen-VL</option>
+      <option value="openai">GPT-4o</option>
+    </select>
+    <label>Qwen API Key</label>
+    <input type="password" id="set-qwen-key" placeholder="sk-...">
+    <label>OpenAI API Key</label>
+    <input type="password" id="set-openai-key" placeholder="sk-...">
+    <label>抽查天数（最近 N 天内的词）</label>
+    <input type="number" id="set-days" min="1" value="7">
+    <label>每组抽查数量</label>
+    <input type="number" id="set-limit" min="1" value="20">
+    <button class="save-btn" onclick="saveSettings()">保存设置</button>
+    <div class="backup-row">
+      <button onclick="exportBackup()">📥 导出备份</button>
+      <button onclick="document.getElementById('import-input').click()">📤 导入备份</button>
+    </div>
+    <input type="file" id="import-input" accept=".json,application/json" style="display:none" onchange="importBackup(event)">
+  </div>
+</div>
+
+<!-- Toast 提示 -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== 全局状态 ===== */
+let quizMode = 'cn2es';      // 当前抽查模式
+let quizWords = [];           // 当前一组题
+let quizIndex = 0;            // 当前题目索引
+let listView = 'all';         // 列表视图（默认全部）
+let listPage = 1;             // 当前页码
+// 独立语言 toggle 状态：true=显示，false=隐藏
+let langVisible = { zh: true, en: true, es: true };
+
+/* ===== 工具函数 ===== */
+function toast(msg, duration = 2000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+async function api(url, options = {}) {
+  try {
+    const res = await fetch(url, options);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.detail || `请求失败 (${res.status})`);
+    }
+    // 处理下载类接口（backup/export）
+    if (res.headers.get('content-type')?.includes('application/json')) {
+      return await res.json();
+    }
+    return await res.json();
+  } catch (e) {
+    toast(e.message || '网络错误');
+    throw e;
+  }
+}
+
+/* ===== Tab 切换 ===== */
+function switchTab(name) {
+  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('active');
+  document.querySelectorAll('.tab-bar button').forEach((b, i) => {
+    b.classList.toggle('active', ['quiz','list','upload'][i] === name);
+  });
+  // 切到列表自动加载
+  if (name === 'list') loadList();
+}
+
+/* ===== 页面1：单词抽查 ===== */
+function setQuizMode(mode) {
+  quizMode = mode;
+  // 即时高亮当前选中的模式按钮
+  document.querySelectorAll('.mode-bar button').forEach((b, i) => {
+    b.classList.toggle('active', (mode === 'cn2es' && i === 0) || (mode === 'es2cn' && i === 1));
+  });
+  // 若正在抽查中，实时按新模式重绘当前卡片，给出即时反馈
+  if (quizWords.length > 0 && quizIndex < quizWords.length) {
+    showQuizCard();
+  }
+}
+
+async function startQuiz() {
+  const body = document.getElementById('quiz-body');
+  body.innerHTML = '<div class="spinner show">⏳ 加载中...</div>';
+  try {
+    const data = await api(`/api/quiz?mode=${quizMode}`);
+    quizWords = data.words || [];
+    quizIndex = 0;
+    if (quizWords.length === 0) {
+      body.innerHTML = '<div class="done-msg">暂无可抽查的单词</div>';
+      return;
+    }
+    showQuizCard();
+  } catch (e) {
+    body.innerHTML = '<button class="start-btn" onclick="startQuiz()">开始抽查</button>';
+  }
+}
+
+function showQuizCard() {
+  const body = document.getElementById('quiz-body');
+  if (quizIndex >= quizWords.length) {
+    body.innerHTML = `<div class="done-msg">🎉 本组完成！<br><button class="start-btn" onclick="startQuiz()">再抽一组</button></div>`;
+    return;
+  }
+  const w = quizWords[quizIndex];
+  const isEs2Cn = quizMode === 'es2cn';
+  // es2cn 模式：显示西班牙语，揭晓中英；cn2es 模式：显示中英，揭晓西语
+  const question = isEs2Cn ? w.spanish : `${w.chinese}`;
+  const hint = isEs2Cn ? '' : (w.english || '');
+  const answer = isEs2Cn ? `${w.chinese}　${w.english || ''}` : w.spanish;
+
+  body.innerHTML = `
+    <div class="quiz-card">
+      <div class="question">${question}</div>
+      ${hint ? `<div class="hint">${hint}</div>` : ''}
+      <div class="answer" id="answer-text">${answer}</div>
+    </div>
+    <button class="reveal-btn" id="reveal-btn" onclick="revealAnswer()">点击揭晓答案</button>
+    <div class="action-row" id="action-row" style="display:none">
+      <button class="btn-remember" onclick="quizAction('remember')">✓ 记得</button>
+      <button class="btn-favorite" onclick="quizAction('favorite')">★ 不记得</button>
+      <button class="btn-kill" onclick="quizAction('kill')">✗ 斩</button>
+    </div>
+  `;
+}
+
+function revealAnswer() {
+  document.getElementById('answer-text').classList.add('show');
+  document.getElementById('reveal-btn').style.display = 'none';
+  document.getElementById('action-row').style.display = 'flex';
+}
+
+async function quizAction(action) {
+  const w = quizWords[quizIndex];
+  try {
+    await api(`/api/words/${w.id}/action`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action})
+    });
+  } catch(e) { /* 即使失败也前进 */ }
+  quizIndex++;
+  showQuizCard();
+}
+
+/* ===== 页面2：单词列表 ===== */
+function setListView(view) {
+  listView = view;
+  listPage = 1;
+  document.querySelectorAll('.sub-tabs button').forEach((b, i) => {
+    b.classList.toggle('active', ['all','favorites','killed'][i] === view);
+  });
+  loadList();
+}
+
+/* 独立语言 toggle：点击切换某一语言的显示/隐藏 */
+function toggleLang(lang) {
+  // 计算如果关掉该列后，还剩几列可见
+  const nextState = !langVisible[lang];
+  const visibleCount = Object.values({...langVisible, [lang]: nextState}).filter(Boolean).length;
+  if (visibleCount === 0) {
+    toast('至少保留一列可见');
+    return;
+  }
+  langVisible[lang] = nextState;
+  updateLangToggles();
+  applyViewFilter();
+}
+
+/* 更新 toggle 按钮外观 */
+function updateLangToggles() {
+  const map = {zh: 'toggle-zh', en: 'toggle-en', es: 'toggle-es'};
+  Object.keys(map).forEach(lang => {
+    const btn = document.getElementById(map[lang]);
+    if (langVisible[lang]) {
+      btn.classList.add('active');
+      btn.classList.remove('inactive');
+    } else {
+      btn.classList.remove('active');
+      btn.classList.add('inactive');
+    }
+  });
+}
+
+/* 依据 langVisible 给每一行的列加/减遮罩 */
+function applyViewFilter() {
+  const maskZh = !langVisible.zh;
+  const maskEn = !langVisible.en;
+  const maskEs = !langVisible.es;
+  document.querySelectorAll('#list-body .word-item').forEach(item => {
+    item.querySelectorAll('.col-zh').forEach(el => {
+      el.classList.toggle('masked', maskZh);
+      if (!maskZh) el.classList.remove('revealed');
+    });
+    item.querySelectorAll('.col-en').forEach(el => {
+      el.classList.toggle('masked', maskEn);
+      if (!maskEn) el.classList.remove('revealed');
+    });
+    item.querySelectorAll('.col-es').forEach(el => {
+      el.classList.toggle('masked', maskEs);
+      if (!maskEs) el.classList.remove('revealed');
+    });
+  });
+}
+
+async function loadList() {
+  const body = document.getElementById('list-body');
+  body.innerHTML = '<div class="spinner show">加载中...</div>';
+  try {
+    const data = await api(`/api/words?view=${listView}&page=${listPage}&size=50`);
+    const words = data.words || [];
+    if (words.length === 0) {
+      body.innerHTML = '<div class="done-msg">暂无数据</div>';
+      document.getElementById('list-pagination').innerHTML = '';
+      return;
+    }
+    body.innerHTML = words.map(w => renderWordItem(w)).join('');
+    // 切换子tab / 翻页后，保持当前 toggle 状态生效
+    updateLangToggles();
+    applyViewFilter();
+    // 分页
+    const totalPages = Math.ceil((data.total || 0) / (data.size || 50));
+    const pag = document.getElementById('list-pagination');
+    if (totalPages > 1) {
+      pag.innerHTML = `
+        <button ${listPage <= 1 ? 'disabled' : ''} onclick="listPage--;loadList()">上一页</button>
+        <span>${listPage} / ${totalPages}</span>
+        <button ${listPage >= totalPages ? 'disabled' : ''} onclick="listPage++;loadList()">下一页</button>
+      `;
+    } else {
+      pag.innerHTML = '';
+    }
+  } catch(e) {
+    body.innerHTML = '<div class="done-msg">加载失败</div>';
+  }
+}
+
+function renderWordItem(w) {
+  // 根据独立 toggle 状态决定哪些列被遮罩
+  const zhClass = !langVisible.zh ? 'masked' : '';
+  const enClass = !langVisible.en ? 'masked' : '';
+  const esClass = !langVisible.es ? 'masked' : '';
+  const restoreBtn = listView === 'killed'
+    ? `<button class="restore-btn" onclick="restoreWord(${w.id},this)">捞回</button>` : '';
+  return `<div class="word-item">
+    <span class="col-zh ${zhClass}" onclick="toggleMask(this)">${w.chinese}</span>
+    <span class="col-en ${enClass}" onclick="toggleMask(this)">${w.english || ''}</span>
+    <span class="col-es ${esClass}" onclick="toggleMask(this)">${w.spanish}</span>
+    ${restoreBtn}
+  </div>`;
+}
+
+function toggleMask(el) {
+  if (el.classList.contains('masked')) {
+    el.classList.toggle('revealed');
+  }
+}
+
+async function restoreWord(id, btn) {
+  try {
+    await api(`/api/words/${id}/restore`, {method: 'POST'});
+    btn.closest('.word-item').remove();
+    toast('已捞回');
+  } catch(e) {}
+}
+
+/* ===== 页面3：上传（手动录入 + 图片 + Excel） ===== */
+
+/* 手动录入：添加一条到待确认表格 */
+function addManualWord() {
+  const esInput = document.getElementById('manual-es');
+  const enInput = document.getElementById('manual-en');
+  const zhInput = document.getElementById('manual-zh');
+  const spanish = esInput.value.trim();
+  const english = enInput.value.trim();
+  const chinese = zhInput.value.trim();
+  if (!spanish) { toast('西班牙语为必填项'); return; }
+  // 将新词添加到 uploadedWords 并重新渲染表格
+  uploadedWords.push({spanish, english, chinese});
+  renderEditTable(uploadedWords);
+  // 清空输入框以便连续添加
+  esInput.value = ''; enInput.value = ''; zhInput.value = '';
+  esInput.focus();
+  toast('已添加，可继续录入');
+}
+
+/* Excel/CSV 上传 */
+async function handleExcelUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const spinner = document.getElementById('upload-spinner');
+  const result = document.getElementById('upload-result');
+  spinner.classList.add('show');
+
+  try {
+    const data = await api('/api/upload/excel', {method: 'POST', body: formData});
+    spinner.classList.remove('show');
+    // 合并到已有待确认列表
+    const newWords = data.words || [];
+    if (newWords.length === 0) { toast('未识别到数据'); return; }
+    uploadedWords = uploadedWords.concat(newWords);
+    renderEditTable(uploadedWords);
+    toast(`识别到 ${newWords.length} 条数据`);
+  } catch (e) {
+    spinner.classList.remove('show');
+  }
+  event.target.value = '';
+}
+
+async function handleUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  // Canvas 压缩
+  const compressed = await compressImage(file, 1260, 0.6);
+  const formData = new FormData();
+  formData.append('file', compressed, file.name);
+
+  const spinner = document.getElementById('upload-spinner');
+  const result = document.getElementById('upload-result');
+  spinner.classList.add('show');
+  result.innerHTML = '';
+
+  try {
+    const data = await api('/api/upload', {method: 'POST', body: formData});
+    spinner.classList.remove('show');
+    // 合并到已有待确认列表（而非覆盖）
+    const newWords = data.words || [];
+    if (newWords.length > 0) {
+      uploadedWords = uploadedWords.concat(newWords);
+      renderEditTable(uploadedWords);
+      toast(`识别到 ${newWords.length} 个单词`);
+    } else {
+      renderEditTable(uploadedWords);
+    }
+  } catch (e) {
+    spinner.classList.remove('show');
+    if (e.message && e.message.includes('Key')) {
+      result.innerHTML = `<div class="done-msg">请先在 <a href="javascript:openSettings()">设置</a> 中配置 API Key</div>`;
+    }
+  }
+  // 重置 input
+  event.target.value = '';
+}
+
+/* 图片压缩 */
+function compressImage(file, maxWidth, quality) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > maxWidth) { h = h * maxWidth / w; w = maxWidth; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(blob => resolve(blob), 'image/jpeg', quality);
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+/* 可编辑表格 */
+let uploadedWords = [];
+function renderEditTable(words) {
+  uploadedWords = words;
+  const result = document.getElementById('upload-result');
+  if (words.length === 0) {
+    result.innerHTML = '';
+    return;
+  }
+  let rows = words.map((w, i) => `<tr>
+    <td><input value="${esc(w.spanish)}" data-i="${i}" data-f="spanish"></td>
+    <td><input value="${esc(w.english)}" data-i="${i}" data-f="english"></td>
+    <td><input value="${esc(w.chinese)}" data-i="${i}" data-f="chinese"></td>
+    <td><button class="del-btn" onclick="delUploadRow(${i})">✕</button></td>
+  </tr>`).join('');
+  result.innerHTML = `
+    <table class="edit-table">
+      <tr><th>西班牙语</th><th>英文</th><th>中文</th><th></th></tr>
+      ${rows}
+    </table>
+    <button class="batch-btn" onclick="batchSave()">确认入库</button>
+  `;
+  // 绑定 input 同步
+  result.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      uploadedWords[inp.dataset.i][inp.dataset.f] = inp.value;
+    });
+  });
+}
+function esc(s) { return (s||'').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+function delUploadRow(index) {
+  uploadedWords.splice(index, 1);
+  renderEditTable(uploadedWords);
+}
+
+async function batchSave() {
+  if (uploadedWords.length === 0) { toast('无数据'); return; }
+  try {
+    const data = await api('/api/words/batch', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({words: uploadedWords})
+    });
+    toast(`入库成功：新增 ${data.inserted}，跳过 ${data.skipped}`);
+    document.getElementById('upload-result').innerHTML = '';
+  } catch(e) {}
+}
+
+/* ===== 设置弹层 ===== */
+function openSettings() {
+  document.getElementById('settings-modal').classList.add('show');
+  loadSettings();
+}
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('show');
+}
+
+async function loadSettings() {
+  try {
+    const s = await api('/api/settings');
+    document.getElementById('set-provider').value = s.ai_provider || 'qwen';
+    document.getElementById('set-qwen-key').value = s.qwen_api_key || '';
+    document.getElementById('set-openai-key').value = s.openai_api_key || '';
+    document.getElementById('set-days').value = s.quiz_days || 7;
+    document.getElementById('set-limit').value = s.quiz_limit || 20;
+  } catch(e) {}
+}
+
+async function saveSettings() {
+  try {
+    await api('/api/settings', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        ai_provider: document.getElementById('set-provider').value,
+        qwen_api_key: document.getElementById('set-qwen-key').value,
+        openai_api_key: document.getElementById('set-openai-key').value,
+        quiz_days: parseInt(document.getElementById('set-days').value) || 7,
+        quiz_limit: parseInt(document.getElementById('set-limit').value) || 20,
+      })
+    });
+    toast('设置已保存');
+    closeSettings();
+  } catch(e) {}
+}
+
+/* 导出/导入备份 */
+async function exportBackup() {
+  try {
+    const res = await fetch('/api/backup/export');
+    if (!res.ok) throw new Error('导出失败');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'vocab_backup.json'; a.click();
+    URL.revokeObjectURL(url);
+    toast('导出成功');
+  } catch(e) { toast(e.message); }
+}
+
+async function importBackup(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const words = JSON.parse(text);
+    const payload = Array.isArray(words) ? {words} : words;
+    const data = await api('/api/backup/import', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    toast(`导入完成：新增 ${data.inserted}，跳过 ${data.skipped}`);
+  } catch(e) { toast('导入失败：' + e.message); }
+  event.target.value = '';
+}
+
+/* 点击弹层背景关闭 */
+document.getElementById('settings-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeSettings();
+});
+
+/* 注册 Service Worker（根路径 scope，控制整个站点） */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js').catch(function(err) {
+      console.warn('Service Worker 注册失败：', err);
+    });
+  });
+}
+</script>
+</body>
+</html>
