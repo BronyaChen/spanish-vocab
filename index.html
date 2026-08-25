@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>西班牙语背单词</title>
+<title>多语言背单词</title>
 <!-- PWA 支持 -->
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#4a90d9">
@@ -39,8 +39,20 @@ input,select{font-family:inherit;outline:none}
 /* ===== 顶栏 ===== */
 .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .header h1{font-size:20px;font-weight:700;color:var(--primary)}
+.header .right-actions{display:flex;align-items:center;gap:8px}
 .header .gear{width:36px;height:36px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-size:18px;transition:transform .2s}
 .header .gear:active{transform:rotate(90deg)}
+
+/* 语言选择器 */
+.lang-switcher{position:relative}
+.lang-switcher .lang-btn{padding:6px 12px;border-radius:20px;background:var(--card);box-shadow:var(--shadow);font-size:13px;font-weight:600;color:var(--primary);display:flex;align-items:center;gap:4px;transition:background .2s}
+.lang-switcher .lang-btn:active{background:var(--primary-light)}
+.lang-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:var(--card);border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.12);padding:6px 0;min-width:160px;z-index:150;display:none}
+.lang-dropdown.show{display:block}
+.lang-dropdown .lang-option{display:block;width:100%;padding:10px 16px;text-align:left;font-size:14px;color:var(--text);background:none;transition:background .15s}
+.lang-dropdown .lang-option:active,.lang-dropdown .lang-option:hover{background:var(--primary-light)}
+.lang-dropdown .lang-option.active{color:var(--primary);font-weight:600}
+.lang-dropdown .lang-divider{height:1px;background:var(--border);margin:4px 0}
 
 /* ===== Tab 底栏 ===== */
 .tab-bar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:100;padding:6px 0 env(safe-area-inset-bottom,6px)}
@@ -60,7 +72,9 @@ section.active{display:block}
 .view-toggles button.inactive{background:var(--card);color:#999;border-color:var(--border);text-decoration:line-through}
 
 /* ===== 卡片 ===== */
-.quiz-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:32px 24px;text-align:center;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:16px;transition:transform .15s}
+.quiz-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:32px 24px;text-align:center;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:16px;transition:transform .15s;position:relative}
+.quiz-edit-btn{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:8px;background:var(--bg);border:1px solid var(--border);color:var(--primary);font-size:15px;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;transition:transform .1s}
+.quiz-edit-btn:active{transform:scale(.9)}
 .quiz-card .question{font-size:26px;font-weight:700;margin-bottom:8px;word-break:break-word}
 .quiz-card .hint{font-size:14px;color:var(--text-light)}
 .quiz-card .answer{font-size:22px;font-weight:600;color:var(--primary);margin-top:16px;opacity:0;transition:opacity .3s}
@@ -88,11 +102,30 @@ section.active{display:block}
 .word-item{background:var(--card);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px}
 .word-item .col-zh{flex:1;font-size:14px;min-width:0}
 .word-item .col-en{flex:1;font-size:13px;color:var(--text-light);min-width:0}
-.word-item .col-es{flex:1;font-size:14px;font-weight:600;color:var(--primary);min-width:0}
+.word-item .col-term{flex:1;font-size:14px;font-weight:600;color:var(--primary);min-width:0}
 /* 遮罩 */
 .word-item .masked{background:var(--border);border-radius:4px;color:transparent;user-select:none;cursor:pointer;transition:background .2s,color .2s;padding:2px 4px}
 .word-item .masked.revealed{background:transparent;color:inherit}
 .word-item .restore-btn{padding:6px 10px;border-radius:8px;background:var(--primary-light);color:var(--primary);font-size:12px;font-weight:600;white-space:nowrap}
+/* 行内操作图标按钮 */
+.word-item .actions{display:flex;gap:4px;flex-shrink:0}
+.word-item .icon-btn{min-width:30px;height:30px;border-radius:8px;background:var(--bg);border:1px solid var(--border);font-size:14px;display:flex;align-items:center;justify-content:center;padding:0 4px;line-height:1;white-space:nowrap;transition:transform .1s,background .15s}
+.word-item .icon-btn:active{transform:scale(.88)}
+.word-item .icon-btn.fav{color:var(--accent)}
+.word-item .icon-btn.fav.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.word-item .icon-btn.kill{color:var(--danger)}
+.word-item .icon-btn.edit{color:var(--primary)}
+.word-item .icon-btn.restore{color:var(--primary);font-size:12px;font-weight:600;padding:0 8px}
+.word-item .icon-btn.save{background:var(--success);color:#fff;border-color:var(--success);font-size:12px;font-weight:600;padding:0 10px}
+.word-item .icon-btn.cancel{font-size:12px;padding:0 10px;color:var(--text-light)}
+/* 行内编辑态 */
+.word-item.editing{flex-wrap:wrap}
+.word-item .edit-fields{display:flex;flex:1;gap:6px;flex-wrap:wrap;min-width:0}
+.word-item .edit-inp{flex:1;min-width:70px;padding:8px 6px;border:1px solid var(--border);border-radius:6px;font-size:13px}
+.word-item .edit-actions{display:flex;gap:4px;flex-shrink:0}
+/* 抽查卡片编辑弹层字段 */
+.qe-label{display:block;font-size:12px;color:var(--text-light);font-weight:600;margin:10px 0 4px}
+.qe-inp{width:100%;padding:11px 10px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg)}
 
 /* 分页 */
 .pagination{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:14px;font-size:13px;color:var(--text-light)}
@@ -179,8 +212,14 @@ section.active{display:block}
 <div class="app">
   <!-- 顶栏 -->
   <div class="header">
-    <h1>📖 西语单词</h1>
-    <button class="gear" onclick="openSettings()">⚙️</button>
+    <h1>📖 <span id="app-title">背单词</span></h1>
+    <div class="right-actions">
+      <div class="lang-switcher">
+        <button class="lang-btn" id="lang-btn" onclick="toggleLangDropdown()"><span id="lang-label">西班牙语</span> ▾</button>
+        <div class="lang-dropdown" id="lang-dropdown"></div>
+      </div>
+      <button class="gear" onclick="openSettings()">⚙️</button>
+    </div>
   </div>
 
   <!-- 添加到主屏幕提示 -->
@@ -188,9 +227,9 @@ section.active{display:block}
 
   <!-- ===== 页面1：抽查 ===== -->
   <section id="sec-quiz" class="active">
-    <div class="mode-bar">
-      <button class="active" onclick="setQuizMode('cn2es')">中/英 → 西</button>
-      <button onclick="setQuizMode('es2cn')">西 → 中/英</button>
+    <div class="mode-bar" id="quiz-mode-bar">
+      <button class="active" onclick="setQuizMode('meaning2term')">释义 → 目标词</button>
+      <button onclick="setQuizMode('term2meaning')">目标词 → 释义</button>
     </div>
     <div id="quiz-body">
       <button class="start-btn" onclick="startQuiz()">开始抽查</button>
@@ -204,10 +243,10 @@ section.active{display:block}
       <button onclick="setListView('favorites')">收藏夹</button>
       <button onclick="setListView('killed')">已斩</button>
     </div>
-    <div class="view-toggles">
-      <button class="active" id="toggle-zh" onclick="toggleLang('zh')">中文</button>
-      <button class="active" id="toggle-en" onclick="toggleLang('en')">英文</button>
-      <button class="active" id="toggle-es" onclick="toggleLang('es')">西语</button>
+    <div class="view-toggles" id="view-toggles">
+      <button class="active" id="toggle-zh" onclick="toggleLangCol('zh')">中文</button>
+      <button class="active" id="toggle-en" onclick="toggleLangCol('en')">英文</button>
+      <button class="active" id="toggle-term" onclick="toggleLangCol('term')">目标词</button>
     </div>
     <div id="list-body" class="word-list"></div>
     <div id="list-pagination" class="pagination"></div>
@@ -228,8 +267,8 @@ section.active{display:block}
     <!-- 手动录入区域 -->
     <div class="manual-entry">
       <h3>✏️ 手动录入</h3>
-      <div class="inputs">
-        <input type="text" id="manual-es" placeholder="西班牙语（必填）">
+      <div class="inputs" id="manual-inputs">
+        <input type="text" id="manual-term" placeholder="目标词（必填）">
         <input type="text" id="manual-en" placeholder="英文（选填）">
         <input type="text" id="manual-zh" placeholder="中文（选填）">
       </div>
@@ -294,21 +333,41 @@ section.active{display:block}
 <!-- Toast 提示 -->
 <div class="toast" id="toast"></div>
 
+<!-- 抽查卡片编辑弹层 -->
+<div class="confirm-overlay" id="quiz-edit-overlay">
+  <div class="confirm-box" style="text-align:left;max-width:340px">
+    <h2 style="font-size:16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">编辑单词 <button class="close" style="background:none;font-size:20px;color:var(--text-light);padding:4px" onclick="closeQuizEdit()">✕</button></h2>
+    <div id="quiz-edit-fields"></div>
+    <div class="confirm-btns" style="margin-top:18px">
+      <button class="btn-no" onclick="closeQuizEdit()">取消</button>
+      <button class="btn-yes" onclick="saveQuizEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ==========================================================
-   西班牙语背单词 PWA — 纯前端 IndexedDB 架构
-   所有数据存储在浏览器 IndexedDB，OCR 通过 CF Worker 代理
+   多语言背单词 PWA — 纯前端 IndexedDB 架构
+   支持多语言切换，数据存储在浏览器 IndexedDB，OCR 通过 CF Worker 代理
    ========================================================== */
 
+/* ===== 语言映射 ===== */
+const LANG_MAP = {
+  es: '西班牙语', fr: '法语', en: '英语', de: '德语',
+  ja: '日语', ko: '韩语', it: '意大利语', pt: '葡萄牙语'
+};
+const LANG_LIST = ['es','fr','en','de','ja','ko','it','pt'];
+
 /* ===== 全局状态 ===== */
-let db = null;                 // IndexedDB 实例
-let quizMode = 'cn2es';        // 当前抽查模式
-let quizWords = [];            // 当前一组题
-let quizIndex = 0;             // 当前题目索引
-let listView = 'all';          // 列表视图
-let listPage = 1;              // 当前页码
-let langVisible = { zh: true, en: true, es: true };
-let uploadedWords = [];        // 待确认列表
+let db = null;
+let currentLang = localStorage.getItem('currentLang') || 'es';
+let quizMode = 'meaning2term';
+let quizWords = [];
+let quizIndex = 0;
+let listView = 'all';
+let listPage = 1;
+let langVisible = { zh: true, en: true, term: true };
+let uploadedWords = [];
 
 /* ===== 工具函数 ===== */
 function toast(msg, duration = 2000) {
@@ -317,25 +376,48 @@ function toast(msg, duration = 2000) {
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), duration);
 }
-
 function esc(s) { return (s||'').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+function langName(code) { return LANG_MAP[code] || code; }
 
 /* ===== IndexedDB 封装 ===== */
 function openDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open('SpanishVocabDB', 1);
+    const req = indexedDB.open('SpanishVocabDB', 2);
     req.onupgradeneeded = (e) => {
       const database = e.target.result;
-      // words store
-      if (!database.objectStoreNames.contains('words')) {
+      const tx = e.target.transaction;
+      if (e.oldVersion < 1) {
+        // 全新安装：直接创建 v2 结构
         const ws = database.createObjectStore('words', { keyPath: 'id', autoIncrement: true });
-        ws.createIndex('spanish', 'spanish', { unique: true });
+        ws.createIndex('lang', 'lang', { unique: false });
+        ws.createIndex('lang_term', ['lang', 'term'], { unique: true });
         ws.createIndex('status', 'status', { unique: false });
         ws.createIndex('createdAt', 'createdAt', { unique: false });
-      }
-      // settings store
-      if (!database.objectStoreNames.contains('settings')) {
-        database.createObjectStore('settings', { keyPath: 'key' });
+        if (!database.objectStoreNames.contains('settings')) {
+          database.createObjectStore('settings', { keyPath: 'key' });
+        }
+      } else if (e.oldVersion < 2) {
+        // v1 → v2 迁移：遍历现有数据，添加 lang/term，删除 spanish 索引
+        const ws = tx.objectStore('words');
+        // 删除旧索引
+        if (ws.indexNames.contains('spanish')) ws.deleteIndex('spanish');
+        // 创建新索引
+        ws.createIndex('lang', 'lang', { unique: false });
+        ws.createIndex('lang_term', ['lang', 'term'], { unique: true });
+        // 用 cursor 迁移每条记录
+        const cursorReq = ws.openCursor();
+        cursorReq.onsuccess = (ev) => {
+          const cursor = ev.target.result;
+          if (!cursor) return;
+          const record = cursor.value;
+          // 添加 lang 和 term 字段
+          if (!record.lang) record.lang = 'es';
+          if (!record.term) record.term = record.spanish || '';
+          // 删除旧 spanish 字段
+          delete record.spanish;
+          cursor.update(record);
+          cursor.continue();
+        };
       }
     };
     req.onsuccess = (e) => resolve(e.target.result);
@@ -349,7 +431,6 @@ function txStore(storeName, mode = 'readonly') {
   return tx.objectStore(storeName);
 }
 
-/* 获取所有记录 */
 function getAllFromStore(storeName) {
   return new Promise((resolve, reject) => {
     const store = txStore(storeName);
@@ -359,7 +440,6 @@ function getAllFromStore(storeName) {
   });
 }
 
-/* 获取单条 */
 function getFromStore(storeName, key) {
   return new Promise((resolve, reject) => {
     const store = txStore(storeName);
@@ -369,7 +449,6 @@ function getFromStore(storeName, key) {
   });
 }
 
-/* 写入单条（等待事务提交确保数据持久化） */
 function putToStore(storeName, data) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(storeName, 'readwrite');
@@ -381,7 +460,6 @@ function putToStore(storeName, data) {
   });
 }
 
-/* 批量写入 */
 function batchPutToStore(storeName, items) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(storeName, 'readwrite');
@@ -392,7 +470,6 @@ function batchPutToStore(storeName, items) {
   });
 }
 
-/* 按索引查询 */
 function getByIndex(storeName, indexName, value) {
   return new Promise((resolve, reject) => {
     const store = txStore(storeName);
@@ -403,12 +480,12 @@ function getByIndex(storeName, indexName, value) {
   });
 }
 
-/* 检查西语单词是否已存在 */
-function wordExists(spanish) {
+/* 检查单词是否已存在（按 lang+term 唯一） */
+function wordExists(lang, term) {
   return new Promise((resolve) => {
     const store = txStore('words');
-    const idx = store.index('spanish');
-    const req = idx.get(spanish);
+    const idx = store.index('lang_term');
+    const req = idx.get([lang, term]);
     req.onsuccess = () => resolve(!!req.result);
     req.onerror = () => resolve(false);
   });
@@ -416,16 +493,13 @@ function wordExists(spanish) {
 
 /* ===== Settings 读写（IndexedDB + localStorage 双写）===== */
 async function getSetting(key, fallback = null) {
-  // 快速从 localStorage 读
   const cached = localStorage.getItem('setting_' + key);
   if (cached !== null) return cached;
-  // 回退 IndexedDB
   const row = await getFromStore('settings', key);
   return row ? row.value : fallback;
 }
 
 async function setSetting(key, value) {
-  // 双写
   localStorage.setItem('setting_' + key, value);
   await putToStore('settings', { key, value });
 }
@@ -433,7 +507,7 @@ async function setSetting(key, value) {
 /* ===== 数据播种 ===== */
 async function seedIfEmpty() {
   const all = await getAllFromStore('words');
-  if (all.length > 0) return; // 已有数据
+  if (all.length > 0) return;
   toast('首次加载，正在导入词库...');
   try {
     const res = await fetch('./seed.json');
@@ -443,7 +517,8 @@ async function seedIfEmpty() {
     const now = new Date().toISOString();
     words.forEach(w => {
       store.add({
-        spanish: w.spanish,
+        lang: 'es',
+        term: w.spanish || w.term || '',
         english: w.english || '',
         chinese: w.chinese || '',
         status: 'active',
@@ -461,20 +536,108 @@ async function seedIfEmpty() {
   }
 }
 
+/* ===== 语言切换器 ===== */
+function toggleLangDropdown() {
+  const dd = document.getElementById('lang-dropdown');
+  if (dd.classList.contains('show')) { dd.classList.remove('show'); return; }
+  renderLangDropdown();
+  dd.classList.add('show');
+  // 点击外部关闭
+  setTimeout(() => {
+    const handler = (e) => {
+      if (!e.target.closest('.lang-switcher')) { dd.classList.remove('show'); document.removeEventListener('click', handler); }
+    };
+    document.addEventListener('click', handler);
+  }, 0);
+}
+
+async function renderLangDropdown() {
+  const dd = document.getElementById('lang-dropdown');
+  // 获取已有语言集合
+  const all = await getAllFromStore('words');
+  const existingLangs = [...new Set(all.map(w => w.lang).filter(Boolean))];
+  // 确保 currentLang 在列表中
+  if (!existingLangs.includes(currentLang)) existingLangs.push(currentLang);
+  // 排序：按 LANG_LIST 顺序
+  existingLangs.sort((a, b) => LANG_LIST.indexOf(a) - LANG_LIST.indexOf(b));
+
+  let html = existingLangs.map(code =>
+    `<button class="lang-option ${code === currentLang ? 'active' : ''}" onclick="switchLang('${code}')">${langName(code)}</button>`
+  ).join('');
+  html += '<div class="lang-divider"></div>';
+  html += '<button class="lang-option" onclick="showAddLangMenu()">＋ 添加语言</button>';
+  dd.innerHTML = html;
+}
+
+function showAddLangMenu() {
+  const dd = document.getElementById('lang-dropdown');
+  let html = LANG_LIST.map(code =>
+    `<button class="lang-option" onclick="addAndSwitchLang('${code}')">${langName(code)}</button>`
+  ).join('');
+  html += '<div class="lang-divider"></div>';
+  html += '<button class="lang-option" onclick="renderLangDropdown()">← 返回</button>';
+  dd.innerHTML = html;
+}
+
+function addAndSwitchLang(code) {
+  switchLang(code);
+}
+
+function switchLang(code) {
+  currentLang = code;
+  localStorage.setItem('currentLang', code);
+  document.getElementById('lang-dropdown').classList.remove('show');
+  updateUIForLang();
+  // 刷新当前页面数据
+  const activeSection = document.querySelector('section.active');
+  if (activeSection && activeSection.id === 'sec-list') loadList();
+}
+
+function updateUIForLang() {
+  const name = langName(currentLang);
+  document.getElementById('lang-label').textContent = name;
+  // 抽查模式按钮文案
+  const modeBar = document.getElementById('quiz-mode-bar');
+  const isEn = currentLang === 'en';
+  if (isEn) {
+    modeBar.children[0].textContent = '看英文猜中文';
+    modeBar.children[1].textContent = '看中文猜英文';
+  } else {
+    modeBar.children[0].textContent = `看中英猜${name}`;
+    modeBar.children[1].textContent = `看${name}猜中英`;
+  }
+  // 列表视图切换按钮
+  const toggleTerm = document.getElementById('toggle-term');
+  const toggleEn = document.getElementById('toggle-en');
+  if (isEn) {
+    toggleTerm.textContent = '英文';
+    toggleEn.style.display = 'none';
+  } else {
+    toggleTerm.textContent = name;
+    toggleEn.style.display = '';
+  }
+  // 手动录入 placeholder
+  const termInput = document.getElementById('manual-term');
+  const enInput = document.getElementById('manual-en');
+  termInput.placeholder = `${name}单词（必填）`;
+  if (isEn) {
+    enInput.style.display = 'none';
+  } else {
+    enInput.style.display = '';
+    enInput.placeholder = '英文（选填）';
+  }
+}
+
 /* ===== 应用初始化 ===== */
 async function initApp() {
   try {
     db = await openDB();
     await seedIfEmpty();
-    // 请求持久化存储
-    if (navigator.storage && navigator.storage.persist) {
-      navigator.storage.persist();
-    }
-    // 检查是否已添加到主屏幕
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
     if (!window.matchMedia('(display-mode: standalone)').matches) {
       document.getElementById('pwa-banner').classList.add('show');
     }
-    // 更新 OCR 按钮状态
+    updateUIForLang();
     updateOCRButtonState();
   } catch (e) {
     toast('数据库初始化失败: ' + e.message);
@@ -497,10 +660,7 @@ async function updateOCRButtonState() {
 
 function triggerOCR() {
   const box = document.getElementById('ocr-box');
-  if (box.classList.contains('disabled')) {
-    toast('请先在设置中配置 Worker URL 和 API Key');
-    return;
-  }
+  if (box.classList.contains('disabled')) { toast('请先在设置中配置 Worker URL 和 API Key'); return; }
   document.getElementById('file-input').click();
 }
 
@@ -517,12 +677,10 @@ function switchTab(name) {
 /* ===== 页面1：单词抽查（加权随机）===== */
 function setQuizMode(mode) {
   quizMode = mode;
-  document.querySelectorAll('.mode-bar button').forEach((b, i) => {
-    b.classList.toggle('active', (mode === 'cn2es' && i === 0) || (mode === 'es2cn' && i === 1));
+  document.querySelectorAll('#quiz-mode-bar button').forEach((b, i) => {
+    b.classList.toggle('active', (mode === 'meaning2term' && i === 0) || (mode === 'term2meaning' && i === 1));
   });
-  if (quizWords.length > 0 && quizIndex < quizWords.length) {
-    showQuizCard();
-  }
+  if (quizWords.length > 0 && quizIndex < quizWords.length) showQuizCard();
 }
 
 async function startQuiz() {
@@ -531,38 +689,29 @@ async function startQuiz() {
   try {
     const quizDays = parseInt(await getSetting('quizDays', '7'));
     const quizLimit = parseInt(await getSetting('quizLimit', '20'));
-    const allWords = await getAllFromStore('words');
+    // 只查当前语言的词
+    const allWords = await getByIndex('words', 'lang', currentLang);
     if (allWords.length === 0) {
       body.innerHTML = '<div class="done-msg">暂无可抽查的单词</div>';
       return;
     }
-   // 过滤掉已斩的单词
     const eligible = allWords.filter(w => w.status !== 'killed');
     if (eligible.length === 0) {
       body.innerHTML = '<div class="done-msg">暂无可抽查的单词<br><span style="font-size:13px;color:var(--text-light)">所有单词已被"斩"，可在列表中"捞回"或添加新词</span></div>';
       return;
     }
-    // 加权随机采样
     const now = Date.now();
     const dayMs = quizDays * 86400000;
     const weighted = eligible.map(w => {
       let weight = 1;
       const lastReview = w.lastReviewedAt ? new Date(w.lastReviewedAt).getTime() : 0;
-      if (!lastReview) {
-        weight = 4; // 从未复习
-      } else if (now - lastReview > dayMs) {
-        weight = 3; // X天未复习
-      } else if (w.status === 'favorite') {
-        weight = 2; // 收藏夹
-      }
+      if (!lastReview) weight = 4;
+      else if (now - lastReview > dayMs) weight = 3;
+      else if (w.status === 'favorite') weight = 2;
       return { word: w, weight };
     });
-    // 加权采样
     quizWords = weightedSample(weighted, Math.min(quizLimit, eligible.length));
-    if (quizWords.length === 0) {
-      body.innerHTML = '<div class="done-msg">暂无可抽查的单词</div>';
-      return;
-    }
+    if (quizWords.length === 0) { body.innerHTML = '<div class="done-msg">暂无可抽查的单词</div>'; return; }
     quizIndex = 0;
     showQuizCard();
   } catch (e) {
@@ -570,7 +719,6 @@ async function startQuiz() {
   }
 }
 
-/* 加权随机采样（不重复） */
 function weightedSample(items, count) {
   const pool = [...items];
   const result = [];
@@ -595,13 +743,27 @@ function showQuizCard() {
     return;
   }
   const w = quizWords[quizIndex];
-  const isEs2Cn = quizMode === 'es2cn';
-  const question = isEs2Cn ? w.spanish : `${w.chinese}`;
-  const hint = isEs2Cn ? '' : (w.english || '');
-  const answer = isEs2Cn ? `${w.chinese}　${w.english || ''}` : w.spanish;
-
+  const isEn = currentLang === 'en';
+  let question, hint, answer;
+  if (quizMode === 'term2meaning') {
+    // 目标词 → 释义
+    question = w.term;
+    hint = '';
+    answer = isEn ? w.chinese : `${w.chinese}　${w.english || ''}`;
+  } else {
+    // 释义 → 目标词
+    if (isEn) {
+      question = w.chinese;
+      hint = '';
+    } else {
+      question = w.chinese;
+      hint = w.english || '';
+    }
+    answer = w.term;
+  }
   body.innerHTML = `
     <div class="quiz-card">
+      <button class="quiz-edit-btn" title="编辑当前词" onclick="openQuizEdit()">✎</button>
       <div class="question">${esc(question)}</div>
       ${hint ? `<div class="hint">${esc(hint)}</div>` : ''}
       <div class="answer" id="answer-text">${esc(answer)}</div>
@@ -623,14 +785,9 @@ function revealAnswer() {
 
 async function quizAction(action) {
   const w = quizWords[quizIndex];
-  // 更新 IndexedDB 中的单词状态
   const now = new Date().toISOString();
-  if (action === 'favorite') {
-    w.status = 'favorite';
-  } else if (action === 'kill') {
-    w.status = 'killed';
-  }
-  // 记得则不变status，只更新复习时间
+  if (action === 'favorite') w.status = 'favorite';
+  else if (action === 'kill') w.status = 'killed';
   w.lastReviewedAt = now;
   await putToStore('words', w);
   quizIndex++;
@@ -647,24 +804,24 @@ function setListView(view) {
   loadList();
 }
 
-function toggleLang(lang) {
-  const nextState = !langVisible[lang];
-  const visibleCount = Object.values({...langVisible, [lang]: nextState}).filter(Boolean).length;
+function toggleLangCol(col) {
+  const nextState = !langVisible[col];
+  const visibleCount = Object.entries(langVisible).filter(([k,v]) => {
+    if (currentLang === 'en' && k === 'en') return false; // en列隐藏时不计
+    return k === col ? nextState : v;
+  }).length;
   if (visibleCount === 0) { toast('至少保留一列可见'); return; }
-  langVisible[lang] = nextState;
+  langVisible[col] = nextState;
   updateLangToggles();
   applyViewFilter();
 }
 
 function updateLangToggles() {
-  const map = {zh: 'toggle-zh', en: 'toggle-en', es: 'toggle-es'};
-  Object.keys(map).forEach(lang => {
-    const btn = document.getElementById(map[lang]);
-    if (langVisible[lang]) {
-      btn.classList.add('active'); btn.classList.remove('inactive');
-    } else {
-      btn.classList.remove('active'); btn.classList.add('inactive');
-    }
+  ['zh','en','term'].forEach(col => {
+    const btn = document.getElementById('toggle-' + col);
+    if (!btn) return;
+    if (langVisible[col]) { btn.classList.add('active'); btn.classList.remove('inactive'); }
+    else { btn.classList.remove('active'); btn.classList.add('inactive'); }
   });
 }
 
@@ -678,9 +835,9 @@ function applyViewFilter() {
       el.classList.toggle('masked', !langVisible.en);
       if (langVisible.en) el.classList.remove('revealed');
     });
-    item.querySelectorAll('.col-es').forEach(el => {
-      el.classList.toggle('masked', !langVisible.es);
-      if (langVisible.es) el.classList.remove('revealed');
+    item.querySelectorAll('.col-term').forEach(el => {
+      el.classList.toggle('masked', !langVisible.term);
+      if (langVisible.term) el.classList.remove('revealed');
     });
   });
 }
@@ -689,30 +846,25 @@ async function loadList() {
   const body = document.getElementById('list-body');
   body.innerHTML = '<div class="spinner show">加载中...</div>';
   try {
-    let allWords = await getAllFromStore('words');
-    // 按 view 过滤
-    if (listView === 'favorites') {
-      allWords = allWords.filter(w => w.status === 'favorite');
-    } else if (listView === 'killed') {
-      allWords = allWords.filter(w => w.status === 'killed');
-    }
-    // 按创建时间降序（新词在前）
+    // 只查当前语言
+    let allWords = await getByIndex('words', 'lang', currentLang);
+    if (listView === 'favorites') allWords = allWords.filter(w => w.status === 'favorite');
+    else if (listView === 'killed') allWords = allWords.filter(w => w.status === 'killed');
     allWords.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
     const pageSize = 50;
     const total = allWords.length;
     const totalPages = Math.ceil(total / pageSize);
     const start = (listPage - 1) * pageSize;
     const pageWords = allWords.slice(start, start + pageSize);
-
     if (pageWords.length === 0) {
       body.innerHTML = '<div class="done-msg">暂无数据</div>';
       document.getElementById('list-pagination').innerHTML = '';
       return;
     }
-    body.innerHTML = pageWords.map(w => renderWordItem(w)).join('');
+    const isEn = currentLang === 'en';
+    body.innerHTML = pageWords.map(w => renderWordItem(w, isEn)).join('');
     updateLangToggles();
     applyViewFilter();
-    // 分页
     const pag = document.getElementById('list-pagination');
     if (totalPages > 1) {
       pag.innerHTML = `
@@ -720,25 +872,35 @@ async function loadList() {
         <span>${listPage} / ${totalPages}</span>
         <button ${listPage >= totalPages ? 'disabled' : ''} onclick="listPage++;loadList()">下一页</button>
       `;
-    } else {
-      pag.innerHTML = '';
-    }
-  } catch(e) {
-    body.innerHTML = '<div class="done-msg">加载失败</div>';
-  }
+    } else { pag.innerHTML = ''; }
+  } catch(e) { body.innerHTML = '<div class="done-msg">加载失败</div>'; }
 }
 
-function renderWordItem(w) {
+function renderWordItem(w, isEn) {
   const zhClass = !langVisible.zh ? 'masked' : '';
   const enClass = !langVisible.en ? 'masked' : '';
-  const esClass = !langVisible.es ? 'masked' : '';
-  const restoreBtn = listView === 'killed'
-    ? `<button class="restore-btn" onclick="restoreWord(${w.id},this)">捞回</button>` : '';
-  return `<div class="word-item">
+  const termClass = !langVisible.term ? 'masked' : '';
+  // 学英语时隐藏 english 列（term 就是英文）
+  const enCol = isEn ? '' : `<span class="col-en ${enClass}" onclick="toggleMask(this)">${esc(w.english || '')}</span>`;
+  let actions;
+  if (listView === 'killed') {
+    // 已斩视图：“取消斩/捞回” + 编辑
+    actions = `
+      <button class="icon-btn restore" title="取消斩/捞回" onclick="event.stopPropagation();updateWordStatus(${w.id},'active',this.closest('.word-item'))">↩ 捞回</button>
+      <button class="icon-btn edit" title="编辑" onclick="event.stopPropagation();startEditRow(${w.id},this.closest('.word-item'))">✎</button>`;
+  } else {
+    // 全部/收藏夹视图：★收藏 + ✗斩 + ✎编辑
+    const favOn = w.status === 'favorite' ? 'on' : '';
+    actions = `
+      <button class="icon-btn fav ${favOn}" title="收藏" onclick="event.stopPropagation();updateWordStatus(${w.id},'favorite',this.closest('.word-item'))">★</button>
+      <button class="icon-btn kill" title="斩" onclick="event.stopPropagation();updateWordStatus(${w.id},'killed',this.closest('.word-item'))">✗</button>
+      <button class="icon-btn edit" title="编辑" onclick="event.stopPropagation();startEditRow(${w.id},this.closest('.word-item'))">✎</button>`;
+  }
+  return `<div class="word-item" data-id="${w.id}">
     <span class="col-zh ${zhClass}" onclick="toggleMask(this)">${esc(w.chinese)}</span>
-    <span class="col-en ${enClass}" onclick="toggleMask(this)">${esc(w.english || '')}</span>
-    <span class="col-es ${esClass}" onclick="toggleMask(this)">${esc(w.spanish)}</span>
-    ${restoreBtn}
+    ${enCol}
+    <span class="col-term ${termClass}" onclick="toggleMask(this)">${esc(w.term)}</span>
+    <span class="actions">${actions}</span>
   </div>`;
 }
 
@@ -746,62 +908,188 @@ function toggleMask(el) {
   if (el.classList.contains('masked')) el.classList.toggle('revealed');
 }
 
-async function restoreWord(id, btn) {
-  // 从 IndexedDB 获取并更新状态为 active
-  const word = await getFromStore('words', id);
-  if (word) {
-    word.status = 'active';
+/* 通用：根据 id 修改 status（收藏/斩/捞回），并按当前视图决定移除或刷新行 */
+async function updateWordStatus(id, newStatus, rowEl) {
+  try {
+    const word = await getFromStore('words', id);
+    if (!word) return;
+    // ★ 收藏切换：若已是 favorite 再点则切回 active
+    if (newStatus === 'favorite' && word.status === 'favorite') newStatus = 'active';
+    word.status = newStatus;
+    if (newStatus === 'favorite') word.lastReviewedAt = new Date().toISOString();
     await putToStore('words', word);
-    btn.closest('.word-item').remove();
-    toast('已捞回');
+    const MSG = { favorite: '已收藏 ★', active: '已恢复', killed: '已斩 ✗' };
+    toast(MSG[newStatus] || '已更新');
+    // 当前视图是否仍应显示该行：all 含 killed → 总保留；favorites/killed 按新状态判断
+    const stillVisible = listView === 'all' ? true
+      : listView === 'favorites' ? newStatus === 'favorite'
+      : listView === 'killed' ? newStatus === 'killed' : true;
+    if (rowEl) {
+      if (!stillVisible) {
+        rowEl.remove();
+        if (!document.querySelector('#list-body .word-item')) loadList();
+      } else {
+        replaceWordRow(rowEl, word);
+      }
+    }
+  } catch (e) { toast('操作失败: ' + e.message); }
+}
+
+/* 用最新记录重渲某一行（保留当前显隐状态） */
+function replaceWordRow(rowEl, word) {
+  const isEn = currentLang === 'en';
+  const tmp = document.createElement('div');
+  tmp.innerHTML = renderWordItem(word, isEn);
+  const newRow = tmp.firstElementChild;
+  rowEl.replaceWith(newRow);
+  applyViewFilter();
+}
+
+/* 按 lang+term 取单条记录（用于编辑防重） */
+function getWordByLangTerm(lang, term) {
+  return new Promise((resolve) => {
+    try {
+      const store = txStore('words');
+      const idx = store.index('lang_term');
+      const req = idx.get([lang, term]);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    } catch (e) { resolve(null); }
+  });
+}
+
+/* 行内编辑：将该行可编辑字段变为 input */
+async function startEditRow(id, rowEl) {
+  const word = await getFromStore('words', id);
+  if (!word) return;
+  const isEn = currentLang === 'en';
+  const enField = isEn ? '' : `<input class="edit-inp" data-f="english" value="${esc(word.english || '')}" placeholder="英文">`;
+  rowEl.classList.add('editing');
+  rowEl.innerHTML = `
+    <div class="edit-fields">
+      <input class="edit-inp" data-f="term" value="${esc(word.term || '')}" placeholder="${esc(langName(currentLang))}">
+      ${enField}
+      <input class="edit-inp" data-f="chinese" value="${esc(word.chinese || '')}" placeholder="中文">
+    </div>
+    <div class="edit-actions">
+      <button class="icon-btn save" onclick="event.stopPropagation();saveEditRow(${id},this)">保存</button>
+      <button class="icon-btn cancel" onclick="event.stopPropagation();cancelEditRow(${id},this)">取消</button>
+    </div>`;
+}
+
+/* 取消编辑：用最新记录重渲该行 */
+async function cancelEditRow(id, btn) {
+  const word = await getFromStore('words', id);
+  if (word) replaceWordRow(btn.closest('.word-item'), word);
+}
+
+/* 保存行内编辑 */
+async function saveEditRow(id, btn) {
+  const rowEl = btn.closest('.word-item');
+  const data = {};
+  rowEl.querySelectorAll('.edit-inp').forEach(i => { data[i.dataset.f] = i.value.trim(); });
+  const term = data.term;
+  if (!term) { toast('目标词不能为空'); return; }
+  const word = await getFromStore('words', id);
+  if (!word) return;
+  // 基本防重：term 变化且与其它记录 (lang,term) 冲突
+  if (term !== word.term) {
+    const dup = await getWordByLangTerm(currentLang, term);
+    if (dup && dup.id !== id) { toast('该词已存在，未保存'); return; }
   }
+  word.term = term;
+  word.chinese = data.chinese || '';
+  word.english = (currentLang === 'en') ? term : (data.english || '');
+  try {
+    await putToStore('words', word);
+    toast('已保存');
+    replaceWordRow(rowEl, word);
+  } catch (e) { toast('保存失败: ' + e.message); }
+}
+
+async function restoreWord(id, btn) {
+  await updateWordStatus(id, 'active', btn.closest('.word-item'));
+}
+
+/* ===== 抽查卡片：编辑当前词 ===== */
+function openQuizEdit() {
+  const w = quizWords[quizIndex];
+  if (!w) return;
+  const isEn = currentLang === 'en';
+  const enField = isEn ? '' : `
+    <label class="qe-label">英文</label>
+    <input class="qe-inp" id="qe-english" value="${esc(w.english || '')}">`;
+  document.getElementById('quiz-edit-fields').innerHTML = `
+    <label class="qe-label">${esc(langName(currentLang))}</label>
+    <input class="qe-inp" id="qe-term" value="${esc(w.term || '')}">
+    ${enField}
+    <label class="qe-label">中文</label>
+    <input class="qe-inp" id="qe-chinese" value="${esc(w.chinese || '')}">`;
+  document.getElementById('quiz-edit-overlay').classList.add('show');
+}
+
+function closeQuizEdit() { document.getElementById('quiz-edit-overlay').classList.remove('show'); }
+
+async function saveQuizEdit() {
+  const w = quizWords[quizIndex];
+  if (!w) return;
+  const term = document.getElementById('qe-term').value.trim();
+  if (!term) { toast('目标词不能为空'); return; }
+  const isEn = currentLang === 'en';
+  const chinese = document.getElementById('qe-chinese').value.trim();
+  const enEl = document.getElementById('qe-english');
+  const english = isEn ? term : (enEl ? enEl.value.trim() : '');
+  // 防重
+  if (term !== w.term) {
+    const dup = await getWordByLangTerm(currentLang, term);
+    if (dup && dup.id !== w.id) { toast('该词已存在，未保存'); return; }
+  }
+  const word = await getFromStore('words', w.id);
+  if (!word) return;
+  word.term = term; word.english = english; word.chinese = chinese;
+  try {
+    await putToStore('words', word);
+    // 同步更新内存中的抽查对象
+    w.term = term; w.english = english; w.chinese = chinese;
+    toast('已保存');
+    closeQuizEdit();
+    showQuizCard();
+  } catch (e) { toast('保存失败: ' + e.message); }
 }
 
 /* ===== 页面3：上传（手动 + 图片OCR + CSV）===== */
 
 /* 手动录入 */
 function addManualWord() {
-  const esInput = document.getElementById('manual-es');
+  const termInput = document.getElementById('manual-term');
   const enInput = document.getElementById('manual-en');
   const zhInput = document.getElementById('manual-zh');
-  const spanish = esInput.value.trim();
-  const english = enInput.value.trim();
+  const term = termInput.value.trim();
+  const english = (currentLang === 'en') ? term : enInput.value.trim();
   const chinese = zhInput.value.trim();
-  if (!spanish) { toast('西班牙语为必填项'); return; }
-  uploadedWords.push({spanish, english, chinese});
+  if (!term) { toast(`${langName(currentLang)}单词为必填项`); return; }
+  uploadedWords.push({ term, english, chinese });
   renderEditTable(uploadedWords);
-  esInput.value = ''; enInput.value = ''; zhInput.value = '';
-  esInput.focus();
+  termInput.value = ''; enInput.value = ''; zhInput.value = '';
+  termInput.focus();
   toast('已添加，可继续录入');
 }
 
-/* CSV 上传（纯前端解析）*/
+/* CSV 上传 */
 function handleCSVUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
-  // 检查文件扩展名
   const ext = file.name.split('.').pop().toLowerCase();
-  if (ext === 'xlsx' || ext === 'xls') {
-    toast('xlsx 格式暂不支持，请导出为 CSV 格式');
-    event.target.value = '';
-    return;
-  }
+  if (ext === 'xlsx' || ext === 'xls') { toast('xlsx 格式暂不支持，请导出为 CSV 格式'); event.target.value = ''; return; }
   const reader = new FileReader();
   reader.onload = (e) => {
     const text = e.target.result;
     const lines = text.split(/\r?\n/).filter(l => l.trim());
     const newWords = [];
     for (const line of lines) {
-      // 尝试逗号或制表符分隔
       let cols = line.includes('\t') ? line.split('\t') : line.split(',');
       cols = cols.map(c => c.trim().replace(/^["']|["']$/g, ''));
-      if (cols[0]) {
-        newWords.push({
-          spanish: cols[0] || '',
-          english: cols[1] || '',
-          chinese: cols[2] || ''
-        });
-      }
+      if (cols[0]) newWords.push({ term: cols[0] || '', english: cols[1] || '', chinese: cols[2] || '' });
     }
     if (newWords.length === 0) { toast('未识别到数据'); return; }
     uploadedWords = uploadedWords.concat(newWords);
@@ -816,75 +1104,58 @@ function handleCSVUpload(event) {
 async function handleUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
-  // 先检查配置，避免无效的图片压缩等待
   const workerUrl = await getSetting('workerUrl', '');
   const provider = await getSetting('provider', 'qwen');
   const apiKey = await getSetting('apiKey', '');
-  if (!workerUrl || !apiKey) {
-    toast('请先在设置中配置 Worker URL 和 API Key');
-    event.target.value = '';
-    return;
-  }
+  if (!workerUrl || !apiKey) { toast('请先在设置中配置 Worker URL 和 API Key'); event.target.value = ''; return; }
   const spinner = document.getElementById('upload-spinner');
   spinner.classList.add('show');
   document.getElementById('upload-result').innerHTML = '';
   try {
-    // 压缩图片并转 base64
     const base64 = await compressAndEncode(file, 1260, 0.6);
-    // 构建请求
-    // 根据 provider 选择视觉模型
     const MODEL_MAP = { qwen: 'qwen-vl-max', openai: 'gpt-4o', doubao: 'doubao-1-5-vision-pro-32k', zhipu: 'glm-4v' };
     const model = MODEL_MAP[provider] || 'qwen-vl-max';
+    const lname = langName(currentLang);
     const body = {
       model,
-      messages: [{
-        role: 'user',
-        content: [
+      messages: [
+        { role: 'system', content: '你是一名外语单词卡片提取助手。只提取学习词汇，忽略UI按钮、导航栏、菜单等非学习内容文字。' },
+        { role: 'user', content: [
           { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64}` } },
-          { type: 'text', text: '请识别这张多邻国截图中所有的西班牙语单词及其英文翻译和中文翻译，返回严格JSON数组[{"spanish":"...","english":"...","chinese":"..."}]，不要返回任何其他文本' }
-        ]
-      }]
+          { type: 'text', text: `请识别这张${lname}学习截图中所有的${lname}单词及其英文、中文翻译。输出必须是纯JSON数组（不要用markdown代码块包裹），格式：[{"term":"${lname}原词","english":"英文释义","chinese":"中文释义"}]。忽略界面按钮、导航栏、菜单等非学习内容。若图中无可识别单词，返回空数组[]。` }
+        ]}
+      ]
     };
     const res = await fetch(workerUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'x-provider': provider
-      },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'x-provider': provider },
       body: JSON.stringify(body)
     });
     if (!res.ok) throw new Error(`OCR 请求失败 (${res.status})`);
     const data = await res.json();
-    // 解析返回结果（兼容不同格式）
     let words = [];
-    if (Array.isArray(data)) {
-      words = data;
-    } else if (data.choices && data.choices[0]) {
-      // OpenAI 兼容格式
+    if (Array.isArray(data)) { words = data; }
+    else if (data.choices && data.choices[0]) {
       let content = data.choices[0].message?.content || '';
-      // 尝试提取 JSON 数组
       const match = content.match(/\[[\s\S]*\]/);
       if (match) words = JSON.parse(match[0]);
-    } else if (data.words) {
-      words = data.words;
-    }
+    } else if (data.words) { words = data.words; }
+    // 兼容：如果返回里有 spanish 没有 term，映射过来
+    words = words.map(w => {
+      if (!w.term && w.spanish) w.term = w.spanish;
+      delete w.spanish;
+      return w;
+    });
     spinner.classList.remove('show');
     if (words.length > 0) {
       uploadedWords = uploadedWords.concat(words);
       renderEditTable(uploadedWords);
       toast(`识别到 ${words.length} 个单词`);
-    } else {
-      toast('未识别到单词');
-    }
-  } catch (e) {
-    spinner.classList.remove('show');
-    toast('OCR 识别失败: ' + e.message);
-  }
+    } else { toast('未识别到单词'); }
+  } catch (e) { spinner.classList.remove('show'); toast('OCR 识别失败: ' + e.message); }
   event.target.value = '';
 }
 
-/* 图片压缩并转 base64 */
 function compressAndEncode(file, maxWidth, quality) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -894,10 +1165,8 @@ function compressAndEncode(file, maxWidth, quality) {
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      // 转 base64（去掉 data:image/jpeg;base64, 前缀）
       const dataUrl = canvas.toDataURL('image/jpeg', quality);
-      const base64 = dataUrl.split(',')[1];
-      resolve(base64);
+      resolve(dataUrl.split(',')[1]);
     };
     img.onerror = () => reject(new Error('图片加载失败'));
     img.src = URL.createObjectURL(file);
@@ -909,23 +1178,27 @@ function renderEditTable(words) {
   uploadedWords = words;
   const result = document.getElementById('upload-result');
   if (words.length === 0) { result.innerHTML = ''; return; }
-  let rows = words.map((w, i) => `<tr>
-    <td><input value="${esc(w.spanish)}" data-i="${i}" data-f="spanish"></td>
-    <td><input value="${esc(w.english)}" data-i="${i}" data-f="english"></td>
-    <td><input value="${esc(w.chinese)}" data-i="${i}" data-f="chinese"></td>
-    <td><button class="del-btn" onclick="delUploadRow(${i})">✕</button></td>
-  </tr>`).join('');
+  const lname = langName(currentLang);
+  const isEn = currentLang === 'en';
+  let rows = words.map((w, i) => {
+    const enCell = isEn ? '' : `<td><input value="${esc(w.english)}" data-i="${i}" data-f="english"></td>`;
+    return `<tr>
+      <td><input value="${esc(w.term)}" data-i="${i}" data-f="term"></td>
+      ${enCell}
+      <td><input value="${esc(w.chinese)}" data-i="${i}" data-f="chinese"></td>
+      <td><button class="del-btn" onclick="delUploadRow(${i})">✕</button></td>
+    </tr>`;
+  }).join('');
+  const enHeader = isEn ? '' : '<th>英文</th>';
   result.innerHTML = `
     <table class="edit-table">
-      <tr><th>西班牙语</th><th>英文</th><th>中文</th><th></th></tr>
+      <tr><th>${lname}</th>${enHeader}<th>中文</th><th></th></tr>
       ${rows}
     </table>
     <button class="batch-btn" onclick="batchSave()">确认入库（${words.length} 条）</button>
   `;
   result.querySelectorAll('input').forEach(inp => {
-    inp.addEventListener('input', () => {
-      uploadedWords[inp.dataset.i][inp.dataset.f] = inp.value;
-    });
+    inp.addEventListener('input', () => { uploadedWords[inp.dataset.i][inp.dataset.f] = inp.value; });
   });
 }
 
@@ -941,11 +1214,13 @@ async function batchSave() {
   const now = new Date().toISOString();
   try {
     for (const w of uploadedWords) {
-      if (!w.spanish || !w.spanish.trim()) { skipped++; continue; }
-      const exists = await wordExists(w.spanish.trim());
+      const term = (w.term || '').trim();
+      if (!term) { skipped++; continue; }
+      const exists = await wordExists(currentLang, term);
       if (exists) { skipped++; continue; }
       await putToStore('words', {
-        spanish: w.spanish.trim(),
+        lang: currentLang,
+        term,
         english: (w.english || '').trim(),
         chinese: (w.chinese || '').trim(),
         status: 'active',
@@ -957,9 +1232,7 @@ async function batchSave() {
     toast(`入库成功：新增 ${inserted}，跳过 ${skipped}`);
     uploadedWords = [];
     document.getElementById('upload-result').innerHTML = '';
-  } catch (e) {
-    toast('入库失败: ' + e.message);
-  }
+  } catch (e) { toast('入库失败: ' + e.message); }
 }
 
 /* ===== 设置弹层 ===== */
@@ -967,9 +1240,7 @@ function openSettings() {
   document.getElementById('settings-modal').classList.add('show');
   loadSettingsUI();
 }
-function closeSettings() {
-  document.getElementById('settings-modal').classList.remove('show');
-}
+function closeSettings() { document.getElementById('settings-modal').classList.remove('show'); }
 
 async function loadSettingsUI() {
   document.getElementById('set-worker-url').value = await getSetting('workerUrl', '');
@@ -980,7 +1251,6 @@ async function loadSettingsUI() {
   updateApiKeyLink();
 }
 
-/* 各 provider 对应的 API Key 管理页，根据下拉选中项动态更新链接 */
 const PROVIDER_LINKS = {
   qwen: 'https://dashscope.console.aliyun.com/apiKey',
   openai: 'https://platform.openai.com/api-keys',
@@ -1003,58 +1273,63 @@ async function saveSettings() {
   closeSettings();
 }
 
-/* 导出数据：IndexedDB 全量 → 紧凑 JSON 下载（省略默认值，体积更小） */
+/* 导出数据：全语言全量 → v2 紧凑 JSON */
 async function exportBackup() {
   try {
     const all = await getAllFromStore('words');
-    // 紧凑格式：省略默认值字段（status=active / lastReviewedAt=null / 空 english,chinese / 不导出 createdAt）
     const words = all.map(w => {
-      const o = { spanish: w.spanish };
+      const o = { lang: w.lang || 'es', term: w.term };
       if (w.english && w.english.trim()) o.english = w.english;
       if (w.chinese && w.chinese.trim()) o.chinese = w.chinese;
       if (w.status && w.status !== 'active') o.status = w.status;
       if (w.lastReviewedAt) o.lastReviewedAt = w.lastReviewedAt;
       return o;
     });
-    const data = { v: 1, t: new Date().toISOString(), words };
-    const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+    const data = { v: 2, t: new Date().toISOString(), words };
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const dateStr = new Date().toISOString().slice(0,10).replace(/-/g, '');  // 20260825
-    a.href = url; a.download = `西语单词_${dateStr}.json`;
+    const dateStr = new Date().toISOString().slice(0,10).replace(/-/g, '');
+    a.href = url; a.download = `单词备份_${dateStr}.json`;
     a.click();
     URL.revokeObjectURL(url);
     toast(`导出成功，共 ${words.length} 个单词`);
   } catch(e) { toast('导出失败: ' + e.message); }
 }
 
-/* 导入更新：选 JSON → 智能合并到 IndexedDB（新增/更新/未变，兼容旧数组格式） */
+/* 导入更新：兼容 v2(lang+term) / v1(spanish) / 纯数组旧格式 */
 async function importBackup(event) {
   const file = event.target.files[0];
   if (!file) return;
   try {
     const text = await file.text();
     const parsed = JSON.parse(text);
-    // 兼容：新格式 {v,t,words:[...]} 或 旧格式纯数组 [{spanish,english,chinese}]
     let importWords;
     if (parsed && parsed.v && Array.isArray(parsed.words)) importWords = parsed.words;
     else if (Array.isArray(parsed)) importWords = parsed;
     else throw new Error('无法识别的 JSON 格式');
-    importWords = importWords.filter(w => w && w.spanish && w.spanish.trim());
+    // 标准化每条记录
+    importWords = importWords.map(w => {
+      if (!w.term && w.spanish) { w.term = w.spanish; delete w.spanish; }
+      if (!w.lang) w.lang = 'es';
+      return w;
+    }).filter(w => w && w.term && w.term.trim());
     if (importWords.length === 0) { toast('文件中无有效单词数据'); event.target.value = ''; return; }
-    // 本地建 spanish 索引（一次读取，避免逐条查询）
+    // 本地建 (lang+term) map
     const localWords = await getAllFromStore('words');
     const localMap = new Map();
-    localWords.forEach(w => localMap.set(w.spanish.trim().toLowerCase(), w));
+    localWords.forEach(w => localMap.set(`${w.lang}|${(w.term||'').trim().toLowerCase()}`, w));
     const now = new Date().toISOString();
     let added = 0, updated = 0, unchanged = 0;
     for (const iw of importWords) {
-      const spanish = iw.spanish.trim();
-      const local = localMap.get(spanish.toLowerCase());
+      const term = iw.term.trim();
+      const lang = iw.lang || 'es';
+      const key = `${lang}|${term.toLowerCase()}`;
+      const local = localMap.get(key);
       if (!local) {
-        // 新词：直接添加
         await putToStore('words', {
-          spanish,
+          lang,
+          term,
           english: (iw.english || '').trim(),
           chinese: (iw.chinese || '').trim(),
           status: iw.status || 'active',
@@ -1064,22 +1339,18 @@ async function importBackup(event) {
         added++;
         continue;
       }
-      // 已有词：智能合并
       let changed = false;
-      const impTime = iw.lastReviewedAt ? new Date(iw.lastReviewedAt).getTime() : -1;  // null 视为最早
+      const impTime = iw.lastReviewedAt ? new Date(iw.lastReviewedAt).getTime() : -1;
       const locTime = local.lastReviewedAt ? new Date(local.lastReviewedAt).getTime() : -1;
       if (impTime > locTime) {
-        // 导入的复习时间更晚：采用导入的 status 与 lastReviewedAt
-        if (iw.status && iw.status !== local.status) { local.status = iw.status; }
+        if (iw.status && iw.status !== local.status) local.status = iw.status;
         local.lastReviewedAt = iw.lastReviewedAt;
         changed = true;
       }
-      // english/chinese：本地为空且导入有值则补充
       if ((!local.english || !local.english.trim()) && iw.english && iw.english.trim()) { local.english = iw.english.trim(); changed = true; }
       if ((!local.chinese || !local.chinese.trim()) && iw.chinese && iw.chinese.trim()) { local.chinese = iw.chinese.trim(); changed = true; }
       if (changed) { await putToStore('words', local); updated++; } else { unchanged++; }
     }
-    // 本地独有词（import 里没有）不动，不计入提示
     toast(`新增 ${added} 个，更新 ${updated} 个，未变 ${unchanged} 个`, 3000);
     if (document.getElementById('sec-list').classList.contains('active')) loadList();
   } catch(e) { toast('导入失败：' + e.message); }
@@ -1089,6 +1360,9 @@ async function importBackup(event) {
 /* 点击弹层背景关闭 */
 document.getElementById('settings-modal').addEventListener('click', function(e) {
   if (e.target === this) closeSettings();
+});
+document.getElementById('quiz-edit-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeQuizEdit();
 });
 
 /* ===== 注册 Service Worker ===== */
