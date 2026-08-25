@@ -144,10 +144,31 @@ section.active{display:block}
 .modal .backup-row{display:flex;gap:10px;margin-top:14px}
 .modal .backup-row button{flex:1;padding:12px;border-radius:10px;font-size:13px;font-weight:600;background:var(--bg);border:1px solid var(--border)}
 .modal .hint-text{font-size:12px;color:var(--text-light);margin-top:4px}
+.apikey-link{display:inline-block;font-size:12px;font-weight:600;color:var(--primary);margin-top:6px;text-decoration:none}
+.apikey-link:hover{text-decoration:underline}
 
 /* ===== 提示横幅 ===== */
 .banner{background:var(--primary-light);border:1px solid var(--primary);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--primary);display:none}
 .banner.show{display:block}
+
+/* ===== 数据同步区域 ===== */
+.sync-section{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 16px;margin-top:18px}
+.sync-section h3{font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.sync-btns{display:flex;gap:10px;margin-bottom:8px}
+.sync-btns button{flex:1;padding:13px 10px;border-radius:10px;font-size:14px;font-weight:600;transition:transform .1s}
+.sync-btns button:active{transform:scale(.96)}
+.sync-btns .btn-export,.sync-btns .btn-import{background:#eef2f8;color:#46566e;border:1px solid #d5dded}
+.sync-btns button:hover{background:#e2e9f4}
+.sync-hint{font-size:11px;color:var(--text-light);text-align:center}
+/* 确认弹窗 */
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:250;align-items:center;justify-content:center}
+.confirm-overlay.show{display:flex}
+.confirm-box{background:var(--card);border-radius:var(--radius);padding:24px 20px;max-width:320px;width:90%;text-align:center;animation:slideUp .2s ease}
+.confirm-box p{font-size:14px;color:var(--text);margin-bottom:18px;line-height:1.6}
+.confirm-box .confirm-btns{display:flex;gap:10px}
+.confirm-box .confirm-btns button{flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:600}
+.confirm-box .btn-yes{background:var(--primary);color:#fff}
+.confirm-box .btn-no{background:var(--bg);border:1px solid var(--border);color:var(--text)}
 
 /* ===== Toast ===== */
 .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
@@ -190,6 +211,16 @@ section.active{display:block}
     </div>
     <div id="list-body" class="word-list"></div>
     <div id="list-pagination" class="pagination"></div>
+    <!-- 数据同步区域 -->
+    <div class="sync-section">
+      <h3>🔄 数据同步</h3>
+      <div class="sync-btns">
+        <button class="btn-export" onclick="exportBackup()">📤 导出数据</button>
+        <button class="btn-import" onclick="document.getElementById('sync-import').click()">📥 导入更新</button>
+      </div>
+      <p class="sync-hint">换设备时：旧设备导出 → 新设备导入，数据自动合并</p>
+      <input type="file" id="sync-import" accept=".json,application/json" hidden onchange="importBackup(event)">
+    </div>
   </section>
 
   <!-- ===== 页面3：上传 ===== -->
@@ -237,10 +268,13 @@ section.active{display:block}
     <input type="url" id="set-worker-url" placeholder="https://your-worker.xxx.workers.dev">
     <p class="hint-text">部署好的 Cloudflare Worker 代理地址</p>
     <label>AI 识别服务</label>
-    <select id="set-provider">
-      <option value="qwen">Qwen-VL</option>
-      <option value="openai">GPT-4o</option>
+    <select id="set-provider" onchange="updateApiKeyLink()">
+      <option value="qwen">通义千问 Qwen-VL</option>
+      <option value="openai">OpenAI GPT-4o</option>
+      <option value="doubao">豆包 Doubao</option>
+      <option value="zhipu">智谱 GLM-4V</option>
     </select>
+    <a id="apikey-link" class="apikey-link" href="#" target="_blank" rel="noopener">获取 API Key →</a>
     <label>API Key</label>
     <input type="password" id="set-api-key" placeholder="sk-...">
     <p class="hint-text">对应 AI 服务商的 API Key</p>
@@ -789,7 +823,9 @@ async function handleUpload(event) {
       return;
     }
     // 构建请求
-    const model = provider === 'openai' ? 'gpt-4o' : 'qwen-vl-max';
+    // 根据 provider 选择视觉模型
+    const MODEL_MAP = { qwen: 'qwen-vl-max', openai: 'gpt-4o', doubao: 'doubao-1-5-vision-pro-32k', zhipu: 'glm-4v' };
+    const model = MODEL_MAP[provider] || 'qwen-vl-max';
     const body = {
       model,
       messages: [{
@@ -928,6 +964,19 @@ async function loadSettingsUI() {
   document.getElementById('set-api-key').value = await getSetting('apiKey', '');
   document.getElementById('set-days').value = await getSetting('quizDays', '7');
   document.getElementById('set-limit').value = await getSetting('quizLimit', '20');
+  updateApiKeyLink();
+}
+
+/* 各 provider 对应的 API Key 管理页，根据下拉选中项动态更新链接 */
+const PROVIDER_LINKS = {
+  qwen: 'https://dashscope.console.aliyun.com/apiKey',
+  openai: 'https://platform.openai.com/api-keys',
+  doubao: 'https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey',
+  zhipu: 'https://open.bigmodel.cn/usercenter/apikeys'
+};
+function updateApiKeyLink() {
+  const p = document.getElementById('set-provider').value;
+  document.getElementById('apikey-link').href = PROVIDER_LINKS[p] || PROVIDER_LINKS.qwen;
 }
 
 async function saveSettings() {
@@ -941,45 +990,85 @@ async function saveSettings() {
   closeSettings();
 }
 
-/* 导出备份：IndexedDB 全量 → JSON 下载 */
+/* 导出数据：IndexedDB 全量 → 紧凑 JSON 下载（省略默认值，体积更小） */
 async function exportBackup() {
   try {
-    const words = await getAllFromStore('words');
-    const blob = new Blob([JSON.stringify(words, null, 2)], {type: 'application/json'});
+    const all = await getAllFromStore('words');
+    // 紧凑格式：省略默认值字段（status=active / lastReviewedAt=null / 空 english,chinese / 不导出 createdAt）
+    const words = all.map(w => {
+      const o = { spanish: w.spanish };
+      if (w.english && w.english.trim()) o.english = w.english;
+      if (w.chinese && w.chinese.trim()) o.chinese = w.chinese;
+      if (w.status && w.status !== 'active') o.status = w.status;
+      if (w.lastReviewedAt) o.lastReviewedAt = w.lastReviewedAt;
+      return o;
+    });
+    const data = { v: 1, t: new Date().toISOString(), words };
+    const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `vocab_backup_${new Date().toISOString().slice(0,10)}.json`;
+    const dateStr = new Date().toISOString().slice(0,10).replace(/-/g, '');  // 20260825
+    a.href = url; a.download = `西语单词_${dateStr}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    toast('导出成功');
+    toast(`导出成功，共 ${words.length} 个单词`);
   } catch(e) { toast('导出失败: ' + e.message); }
 }
 
-/* 导入备份：选 JSON 文件 → 写入 IndexedDB */
+/* 导入更新：选 JSON → 智能合并到 IndexedDB（新增/更新/未变，兼容旧数组格式） */
 async function importBackup(event) {
   const file = event.target.files[0];
   if (!file) return;
   try {
     const text = await file.text();
-    const words = JSON.parse(text);
-    if (!Array.isArray(words)) throw new Error('格式错误：需要JSON数组');
-    let inserted = 0, skipped = 0;
+    const parsed = JSON.parse(text);
+    // 兼容：新格式 {v,t,words:[...]} 或 旧格式纯数组 [{spanish,english,chinese}]
+    let importWords;
+    if (parsed && parsed.v && Array.isArray(parsed.words)) importWords = parsed.words;
+    else if (Array.isArray(parsed)) importWords = parsed;
+    else throw new Error('无法识别的 JSON 格式');
+    importWords = importWords.filter(w => w && w.spanish && w.spanish.trim());
+    if (importWords.length === 0) { toast('文件中无有效单词数据'); event.target.value = ''; return; }
+    // 本地建 spanish 索引（一次读取，避免逐条查询）
+    const localWords = await getAllFromStore('words');
+    const localMap = new Map();
+    localWords.forEach(w => localMap.set(w.spanish.trim().toLowerCase(), w));
     const now = new Date().toISOString();
-    for (const w of words) {
-      if (!w.spanish) { skipped++; continue; }
-      const exists = await wordExists(w.spanish.trim());
-      if (exists) { skipped++; continue; }
-      await putToStore('words', {
-        spanish: w.spanish.trim(),
-        english: (w.english || '').trim(),
-        chinese: (w.chinese || '').trim(),
-        status: w.status || 'active',
-        createdAt: w.createdAt || now,
-        lastReviewedAt: w.lastReviewedAt || null
-      });
-      inserted++;
+    let added = 0, updated = 0, unchanged = 0;
+    for (const iw of importWords) {
+      const spanish = iw.spanish.trim();
+      const local = localMap.get(spanish.toLowerCase());
+      if (!local) {
+        // 新词：直接添加
+        await putToStore('words', {
+          spanish,
+          english: (iw.english || '').trim(),
+          chinese: (iw.chinese || '').trim(),
+          status: iw.status || 'active',
+          createdAt: iw.createdAt || now,
+          lastReviewedAt: iw.lastReviewedAt || null
+        });
+        added++;
+        continue;
+      }
+      // 已有词：智能合并
+      let changed = false;
+      const impTime = iw.lastReviewedAt ? new Date(iw.lastReviewedAt).getTime() : -1;  // null 视为最早
+      const locTime = local.lastReviewedAt ? new Date(local.lastReviewedAt).getTime() : -1;
+      if (impTime > locTime) {
+        // 导入的复习时间更晚：采用导入的 status 与 lastReviewedAt
+        if (iw.status && iw.status !== local.status) { local.status = iw.status; }
+        local.lastReviewedAt = iw.lastReviewedAt;
+        changed = true;
+      }
+      // english/chinese：本地为空且导入有值则补充
+      if ((!local.english || !local.english.trim()) && iw.english && iw.english.trim()) { local.english = iw.english.trim(); changed = true; }
+      if ((!local.chinese || !local.chinese.trim()) && iw.chinese && iw.chinese.trim()) { local.chinese = iw.chinese.trim(); changed = true; }
+      if (changed) { await putToStore('words', local); updated++; } else { unchanged++; }
     }
-    toast(`导入完成：新增 ${inserted}，跳过 ${skipped}`);
+    // 本地独有词（import 里没有）不动，不计入提示
+    toast(`新增 ${added} 个，更新 ${updated} 个，未变 ${unchanged} 个`, 3000);
+    if (document.getElementById('sec-list').classList.contains('active')) loadList();
   } catch(e) { toast('导入失败：' + e.message); }
   event.target.value = '';
 }
