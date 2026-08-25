@@ -4,6 +4,8 @@
 const PROVIDERS = {
   qwen: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
   openai: 'https://api.openai.com/v1/chat/completions',
+  doubao: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+  zhipu: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
 };
 
 const CORS_HEADERS = {
