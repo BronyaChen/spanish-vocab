@@ -369,13 +369,15 @@ function getFromStore(storeName, key) {
   });
 }
 
-/* 写入单条 */
+/* 写入单条（等待事务提交确保数据持久化） */
 function putToStore(storeName, data) {
   return new Promise((resolve, reject) => {
-    const store = txStore(storeName, 'readwrite');
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
     const req = store.put(data);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    tx.oncomplete = () => resolve(req.result);
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
   });
 }
 
@@ -534,10 +536,16 @@ async function startQuiz() {
       body.innerHTML = '<div class="done-msg">暂无可抽查的单词</div>';
       return;
     }
+   // 过滤掉已斩的单词
+    const eligible = allWords.filter(w => w.status !== 'killed');
+    if (eligible.length === 0) {
+      body.innerHTML = '<div class="done-msg">暂无可抽查的单词<br><span style="font-size:13px;color:var(--text-light)">所有单词已被"斩"，可在列表中"捞回"或添加新词</span></div>';
+      return;
+    }
     // 加权随机采样
     const now = Date.now();
     const dayMs = quizDays * 86400000;
-    const weighted = allWords.map(w => {
+    const weighted = eligible.map(w => {
       let weight = 1;
       const lastReview = w.lastReviewedAt ? new Date(w.lastReviewedAt).getTime() : 0;
       if (!lastReview) {
@@ -546,13 +554,15 @@ async function startQuiz() {
         weight = 3; // X天未复习
       } else if (w.status === 'favorite') {
         weight = 2; // 收藏夹
-      } else if (w.status === 'killed') {
-        weight = 1; // 已斩
       }
       return { word: w, weight };
     });
     // 加权采样
-    quizWords = weightedSample(weighted, Math.min(quizLimit, allWords.length));
+    quizWords = weightedSample(weighted, Math.min(quizLimit, eligible.length));
+    if (quizWords.length === 0) {
+      body.innerHTML = '<div class="done-msg">暂无可抽查的单词</div>';
+      return;
+    }
     quizIndex = 0;
     showQuizCard();
   } catch (e) {
@@ -806,22 +816,21 @@ function handleCSVUpload(event) {
 async function handleUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
+  // 先检查配置，避免无效的图片压缩等待
+  const workerUrl = await getSetting('workerUrl', '');
+  const provider = await getSetting('provider', 'qwen');
+  const apiKey = await getSetting('apiKey', '');
+  if (!workerUrl || !apiKey) {
+    toast('请先在设置中配置 Worker URL 和 API Key');
+    event.target.value = '';
+    return;
+  }
   const spinner = document.getElementById('upload-spinner');
   spinner.classList.add('show');
   document.getElementById('upload-result').innerHTML = '';
   try {
     // 压缩图片并转 base64
     const base64 = await compressAndEncode(file, 1260, 0.6);
-    // 读取设置
-    const workerUrl = await getSetting('workerUrl', '');
-    const provider = await getSetting('provider', 'qwen');
-    const apiKey = await getSetting('apiKey', '');
-    if (!workerUrl || !apiKey) {
-      toast('请先在设置中配置 Worker URL 和 API Key');
-      spinner.classList.remove('show');
-      event.target.value = '';
-      return;
-    }
     // 构建请求
     // 根据 provider 选择视觉模型
     const MODEL_MAP = { qwen: 'qwen-vl-max', openai: 'gpt-4o', doubao: 'doubao-1-5-vision-pro-32k', zhipu: 'glm-4v' };
@@ -930,23 +939,27 @@ async function batchSave() {
   if (uploadedWords.length === 0) { toast('无数据'); return; }
   let inserted = 0, skipped = 0;
   const now = new Date().toISOString();
-  for (const w of uploadedWords) {
-    if (!w.spanish || !w.spanish.trim()) { skipped++; continue; }
-    const exists = await wordExists(w.spanish.trim());
-    if (exists) { skipped++; continue; }
-    await putToStore('words', {
-      spanish: w.spanish.trim(),
-      english: (w.english || '').trim(),
-      chinese: (w.chinese || '').trim(),
-      status: 'active',
-      createdAt: now,
-      lastReviewedAt: null
-    });
-    inserted++;
+  try {
+    for (const w of uploadedWords) {
+      if (!w.spanish || !w.spanish.trim()) { skipped++; continue; }
+      const exists = await wordExists(w.spanish.trim());
+      if (exists) { skipped++; continue; }
+      await putToStore('words', {
+        spanish: w.spanish.trim(),
+        english: (w.english || '').trim(),
+        chinese: (w.chinese || '').trim(),
+        status: 'active',
+        createdAt: now,
+        lastReviewedAt: null
+      });
+      inserted++;
+    }
+    toast(`入库成功：新增 ${inserted}，跳过 ${skipped}`);
+    uploadedWords = [];
+    document.getElementById('upload-result').innerHTML = '';
+  } catch (e) {
+    toast('入库失败: ' + e.message);
   }
-  toast(`入库成功：新增 ${inserted}，跳过 ${skipped}`);
-  uploadedWords = [];
-  document.getElementById('upload-result').innerHTML = '';
 }
 
 /* ===== 设置弹层 ===== */
