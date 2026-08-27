@@ -239,7 +239,7 @@ section.active{display:block}
   <!-- ===== 页面2：列表 ===== -->
   <section id="sec-list">
     <div class="sub-tabs">
-      <button class="active" onclick="setListView('all')">全部</button>
+      <button class="active" onclick="setListView('all')">单词本</button>
       <button onclick="setListView('favorites')">收藏夹</button>
       <button onclick="setListView('killed')">已斩</button>
     </div>
@@ -787,7 +787,16 @@ async function quizAction(action) {
   const w = quizWords[quizIndex];
   const now = new Date().toISOString();
   if (action === 'favorite') w.status = 'favorite';
-  else if (action === 'kill') w.status = 'killed';
+  else if (action === 'kill') {
+    w.status = 'killed';
+    playSlashSound();
+    // 从当前组中移除已斩的词，避免后续重复出现
+    quizWords.splice(quizIndex, 1);
+    w.lastReviewedAt = now;
+    await putToStore('words', w);
+    showQuizCard();
+    return;
+  }
   w.lastReviewedAt = now;
   await putToStore('words', w);
   quizIndex++;
@@ -848,7 +857,8 @@ async function loadList() {
   try {
     // 只查当前语言
     let allWords = await getByIndex('words', 'lang', currentLang);
-    if (listView === 'favorites') allWords = allWords.filter(w => w.status === 'favorite');
+    if (listView === 'all') allWords = allWords.filter(w => w.status !== 'killed');
+    else if (listView === 'favorites') allWords = allWords.filter(w => w.status === 'favorite');
     else if (listView === 'killed') allWords = allWords.filter(w => w.status === 'killed');
     allWords.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
     const pageSize = 50;
@@ -918,10 +928,11 @@ async function updateWordStatus(id, newStatus, rowEl) {
     word.status = newStatus;
     if (newStatus === 'favorite') word.lastReviewedAt = new Date().toISOString();
     await putToStore('words', word);
+    if (newStatus === 'killed') playSlashSound();
     const MSG = { favorite: '已收藏 ★', active: '已恢复', killed: '已斩 ✗' };
     toast(MSG[newStatus] || '已更新');
     // 当前视图是否仍应显示该行：all 含 killed → 总保留；favorites/killed 按新状态判断
-    const stillVisible = listView === 'all' ? true
+    const stillVisible = listView === 'all' ? newStatus !== 'killed'
       : listView === 'favorites' ? newStatus === 'favorite'
       : listView === 'killed' ? newStatus === 'killed' : true;
     if (rowEl) {
@@ -1364,6 +1375,25 @@ document.getElementById('settings-modal').addEventListener('click', function(e) 
 document.getElementById('quiz-edit-overlay').addEventListener('click', function(e) {
   if (e.target === this) closeQuizEdit();
 });
+
+/* ===== 斩音效（Web Audio API 合成） ===== */
+function playSlashSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(900, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.4, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.18);
+    osc.onended = () => ctx.close();
+  } catch(e) { /* 静默失败 */ }
+}
 
 /* ===== 注册 Service Worker ===== */
 if ('serviceWorker' in navigator) {
